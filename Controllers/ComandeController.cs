@@ -162,6 +162,15 @@ namespace ComandeRestAPI.Controllers
             return Ok(namem);
         }
 
+
+        [HttpGet("getTavolateByIdOperatore")]
+        public ActionResult<IEnumerable<Tavolata>> GetTavolateByIdOperatore(int id_operatore)
+        {
+            List<Tavolata> list = new List<Tavolata>();
+            list=Tavolata.GetTavolateByIdOperatore(id_operatore);
+            return Ok(list);
+        }
+
         [HttpGet("getTestataConto")]
         public ActionResult<TestaConto> GetTestataConto(int idtavolata)
         {
@@ -386,6 +395,14 @@ namespace ComandeRestAPI.Controllers
             Decimal result = r.GetDecimal(0);
             db.Dispose();
             return Ok(string.Format("{0:0.00}", result));
+        }
+
+
+        [HttpGet("getTavolatabyID")]
+        public ActionResult<Tavolata> GetTavolatabyID(int id)
+        {
+           
+            return Ok(new Tavolata(id));
         }
 
         [HttpPost("aggiornaTavolo")]
@@ -1091,5 +1108,18 @@ namespace ComandeRestAPI.Controllers
                 UseShellExecute = false
             }).WaitForExit();
         }
+
+
+        [HttpGet("getOperatorebyNomeandById")]
+        public ActionResult<Operatori> getOperatorebyNomeandById(string nominativo, string pin)
+        {
+            Operatori? op = Operatori.Create(nominativo, pin);
+            if (op == null)
+            {
+                return NotFound("Credenziali non valide o Operatore non Attivo");
+            }
+            return op;
+        }
+
     }
 }

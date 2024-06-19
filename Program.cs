@@ -4,11 +4,22 @@ using System.Data.SqlClient;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configurare CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 
 builder.Services.AddScoped<SqlConnection>(sp =>
 {
@@ -26,6 +37,9 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 }
 
 app.UseHttpsRedirection();
+
+// Usare la politica CORS configurata
+app.UseCors("AllowAllOrigins");
 
 app.UseAuthorization();
 

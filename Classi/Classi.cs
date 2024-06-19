@@ -46,27 +46,42 @@ namespace ComandeRestAPI.Classi
         private DateTime _dataOraArrivo;
         private DateTime _dataOraConto;
         private decimal _acconto;
-        private string _stato;
-        private User _operatore;
+        private Stato _stato;
+        private Operatori _operatore;
         private int _adulti;
         private int _bambini;
         private Sala _sala;
         private string _descrizione;
         private string _note;
         private decimal _sconto;
+        private int _id_cliente;
+        private decimal _preconto;
+        private decimal _conto;
+        private string _item;
+        private int _numero_tavolo;
         private List<Comande> _comandeReparto;
 
 
-        /// <summary>
-        /// costruisce una nuova istanza di Tavolata vuota.
-        /// </summary>
-        public Tavolata()
-        { }
+        public int Id { get => _id; set => _id = value; }
+        public DateTime DataOraArrivo { get => _dataOraArrivo; set => _dataOraArrivo = value; }
+        public DateTime DataOraConto { get => _dataOraConto; set => _dataOraConto = value; }
+        public decimal Acconto { get => _acconto; set => _acconto = value; }
+        public Stato Stato { get => _stato; set => _stato = value; }
+        public Operatori Operatore { get => _operatore; set => _operatore = value; }
+        public int Adulti { get => _adulti; set => _adulti = value; }
+        public int Bambini { get => _bambini; set => _bambini = value; }
+        public Sala Sala { get => _sala; set => _sala = value; }
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        public string Note { get => _note; set => _note = value; }
+        public decimal Sconto { get => _sconto; set => _sconto = value; }
+        public int Numero_tavolo { get => _numero_tavolo; set => _numero_tavolo = value; }
+        public int Id_cliente { get => _id_cliente; set => _id_cliente = value; }
+        public decimal Preconto { get => _preconto; set => _preconto = value; }
+        public decimal Conto { get => _conto; set => _conto = value; }
+        public string Item { get => _item; set => _item = value; }
 
-        /// <summary>
-        /// costruisce una nuova istanza di Tavolata 
-        /// </summary>
-        /// <param name="id">(intero) ID Tavolata</param>
+        public Tavolata()  { }
+
         public Tavolata(int id)
         {
             using (db db = new db())
@@ -83,11 +98,11 @@ namespace ComandeRestAPI.Classi
                     }
                     catch { }
                     _acconto = decimal.Parse(r[3].ToString());
-                    _stato = (string)r[4];
-                    User user = User.GetUserbyID(r[5].ToString());
+                    Stato stato = new Stato(r.GetInt32(4));
+                    Operatori user = new  Operatori(r.GetInt32(5));
                     if (user == null)
                     {
-                        user = User.GetUserbyID("999");
+                        user = new Operatori(999);
                     }
                     _operatore = user;
                     _adulti = (int)r[6];
@@ -95,12 +110,12 @@ namespace ComandeRestAPI.Classi
                     _sala = Sala.getSalaByID((int)r[8]);
                     _descrizione = r[9].ToString();
                     _note = r[10].ToString();
-                    try
-                    {
-                        _sconto = decimal.Parse(r[11].ToString());
-                    }
-                    catch { }
-
+                    try{_sconto = decimal.Parse(r[11].ToString());} catch { }
+                    _id_cliente = (int)r[12];
+                    try { _preconto = decimal.Parse(r[13].ToString());} catch { }
+                    try{ _sconto = decimal.Parse(r[14].ToString());}  catch { }
+                    _item= r[15].ToString();
+                    try { _numero_tavolo = (int)r[16]; } catch { }
                 }
                 else
                 {
@@ -112,21 +127,8 @@ namespace ComandeRestAPI.Classi
         }
 
 
-        public int Id { get => _id; set => _id = value; }
-        public DateTime DataOraArrivo { get => _dataOraArrivo; set => _dataOraArrivo = value; }
-        public DateTime DataOraConto { get => _dataOraConto; set => _dataOraConto = value; }
-        public decimal Acconto { get => _acconto; set => _acconto = value; }
-        public string Stato { get => _stato; set => _stato = value; }
-        public User Operatore { get => _operatore; set => _operatore = value; }
-        public int Adulti { get => _adulti; set => _adulti = value; }
-        public int Bambini { get => _bambini; set => _bambini = value; }
-        public Sala Sala { get => _sala; set => _sala = value; }
-        public string Descrizione { get => _descrizione; set => _descrizione = value; }
-        public string Note { get => _note; set => _note = value; }
-        public decimal Sconto { get => _sconto; set => _sconto = value; }
 
-
-        public static List<Tavolata> GetTavolateByOperatore(User operatore)
+        public static List<Tavolata> GetTavolateByIdOperatore(int id_operatore)
         {
             List<Tavolata> t = new List<Tavolata>();
             // string endora = "";
@@ -142,9 +144,36 @@ namespace ComandeRestAPI.Classi
             string sqlOra12 = $" and Datepart(HOUR, data_ora_arrivo) =12";
             string sqlOra19 = $" and Datepart(HOUR, data_ora_arrivo) =19";
             db db = new db(); //SYSDATETIME()
-            string sql = $@"SELECT * from tavolata 
-where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,103)";
-            //"and id_operatore = '{operatore.Id_operatore}' ";
+            string sql = $@"SELECT * from tavolata where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,103) and id_operatore = '{id_operatore}' ";
+
+            if (ora.Contains("12")) sql += sqlOra12; else sql += sqlOra19;
+            sql += "  order by descrizione";
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                t.Add(new Tavolata((int)r[0]));
+            }
+            db.Dispose();
+            return t;
+
+        }
+        public static List<Tavolata> GetTavolateOdierne()
+        {
+            List<Tavolata> t = new List<Tavolata>();
+            // string endora = "";
+            string ora = "";
+
+            if (DateTime.Now.Hour >= 9 && DateTime.Now.Hour < 17) ora = "12:00"; else ora = "19:00";
+            /*
+            if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
+                else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
+            if (DateTime.Now.Hour >= 0 && DateTime.Now.Hour < 6)
+                endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
+                */
+            string sqlOra12 = $" and Datepart(HOUR, data_ora_arrivo) =12";
+            string sqlOra19 = $" and Datepart(HOUR, data_ora_arrivo) =19";
+            db db = new db(); //SYSDATETIME()
+            string sql = $@"SELECT * from tavolata where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,103)";
 
             if (ora.Contains("12")) sql += sqlOra12; else sql += sqlOra19;
             sql += "  order by descrizione";
@@ -184,6 +213,7 @@ where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,1
             get { return _comandeReparto; }
             set { _comandeReparto = value; }
         }
+
 
     }
 
@@ -422,7 +452,6 @@ where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,1
         public string Desc_pietanza { get => _desc_pietanza; set => _desc_pietanza = value; }
         public string Desc_tipo { get => _desc_tipo; set => _desc_tipo = value; }
     }
-
     [Serializable]
     public class TestaConto
     {
@@ -442,7 +471,6 @@ where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,1
         public string Cameriere { get => _cameriere; set => _cameriere = value; }
         public int IdTavolata { get => _idTavolata; set => _idTavolata = value; }
     }
-
     [Serializable]
     public struct InsertExtra
     {
@@ -456,7 +484,6 @@ where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,1
         public float Prezzo { get => _prezzo; set => _prezzo = value; }
         public int Quantita { get => _quantita; set => _quantita = value; }
     }
-
     [Serializable]
     public class IncassoGiorno
     {
@@ -509,36 +536,7 @@ where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,1
         public int Quantita { get => _quantita; set => _quantita = value; }
         public string Note_pietanza { get => _note_pietanza; set => _note_pietanza = value; }
     }
-    [Serializable]
-    public class User
-    {
-        private string _id_operatore;
-        private string _nominativo;
-        private string _pin;
-
-        public string Id_operatore { get => _id_operatore; set => _id_operatore = value; }
-        public string Nominativo { get => _nominativo; set => _nominativo = value; }
-        public string Pin { get => _pin; set => _pin = value; }
-
-        public static User GetUserbyID(string id)
-        {
-            db db = new db();
-            SqlDataReader r = db.getReader($"Select *  from operatori where id_operatore='{id.ToString()}'");
-            if (r.HasRows)
-            {
-                r.Read();
-                User u = new User() { Id_operatore = (string)r[0], Nominativo = (string)r[1], Pin = (string)r[2] };
-                db.Dispose();
-                return u;
-            }
-            else
-            {
-                db.Dispose();
-                return null;
-
-            }
-        }
-    }
+    
     [Serializable]
     public class Pietanza
     {
@@ -625,5 +623,98 @@ where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,1
         public int Stato { get => _stato; set => _stato = value; }
         public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
         public string Num_alternanza { get => _num_alternanza; set => _num_alternanza = value; }
+    }
+
+    [Serializable]
+    public class Operatori 
+    {
+        private int id_operatore;
+        private string nominativo;
+        private string pin;
+        private bool attivo;
+
+        public int Id_operatore { get => id_operatore; set => id_operatore = value; }
+        public string Nominativo { get => nominativo; set => nominativo = value; }
+        public string Pin { get => pin; set => pin = value; }
+        public bool Attivo { get => attivo; set => attivo = value; }
+
+        public Operatori() { }
+        public Operatori(int id) 
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"select * from operatori where id_operatore={id}");
+            if (r.HasRows)
+            {
+                r.Read();
+                id_operatore = r.GetInt32(0);
+                nominativo = r[1].ToString();
+                pin = r[2].ToString();
+                attivo =r.GetBoolean(3);
+            }
+            else
+            {
+                throw new Exception("Nessun Operatore con questo ID");
+            }
+            db.Dispose();
+        }
+        public static Operatori? Create(string nominativo, string pin)
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"select * from operatori where nominativo='{nominativo}' and pin='{pin}' and attivo='true'");
+            if (r.HasRows)
+            {
+                r.Read();
+                var operatore = new Operatori
+                {
+                    id_operatore = r.GetInt32(0),
+                    nominativo = r[1].ToString(),
+                    pin = r[2].ToString(),
+                    attivo = r.GetBoolean(3)
+                };
+                db.Dispose();
+                return operatore;
+            }
+            else
+            {
+                db.Dispose();
+                return null;
+            }
+        }
+
+    }
+
+    [Serializable]
+    public class Stato 
+    {
+        private int id_stato;
+        private string descrizione;
+        private string colore;
+        private string colore_codice;
+
+        public int Id_stato { get => id_stato; set => id_stato = value; }
+        public string Descrizione { get => descrizione; set => descrizione = value; }
+        public string Colore { get => colore; set => colore = value; }
+        public string Colore_codice { get => colore_codice; set => colore_codice = value; }
+
+        public Stato() { }
+        public Stato(int id)
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"select * from stato where id_stato={id}");
+            if (r.HasRows)
+            {
+                r.Read();
+                id_stato = r.GetInt32(0);
+                descrizione = r[1].ToString();
+                colore= r[2].ToString();
+                colore_codice = r[2].ToString();
+            }
+            else
+            {
+                throw new Exception("Nessuno Stato con questo ID");
+            }
+            db.Dispose();
+        }
+
     }
 }
