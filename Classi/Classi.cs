@@ -1,0 +1,629 @@
+﻿using System.Data.SqlClient;
+
+namespace ComandeRestAPI.Classi
+{
+    public class logEventi
+    {
+        private int _idUtente = 999;
+
+        public logEventi()
+        {
+        }
+
+        public logEventi(int idutente)
+        {
+            _idUtente = idutente;
+        }
+
+        /// <summary>
+        /// Scrive una riga del log
+        /// </summary>
+        /// <param name="msg">Messaggio da scrivere nel log</param>
+        /// <param name="note">Note da inserire per il messaggio [nessuna] è predefinito</param>
+        public void Scrivi(string msg, string note = "nessuna")
+        {
+            db db = new db();
+            string sql = $@"INSERT INTO [dbo].[log_eventi]
+                                       ([data]
+                                       ,[id_operatore]
+                                       ,[evento]
+                                       ,[note])
+                                 VALUES
+                                       (convert(datetime,'{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}', 103)
+                                       ,{_idUtente}
+                                       ,'{msg.Replace("'", "''")}'
+                                       ,'{note.Replace("'", "''")}')";
+            db.Esegui(sql);
+            db.Dispose();
+
+        }
+    }
+
+    [Serializable]
+    public class Tavolata
+    {
+        private int _id;
+        private DateTime _dataOraArrivo;
+        private DateTime _dataOraConto;
+        private decimal _acconto;
+        private string _stato;
+        private User _operatore;
+        private int _adulti;
+        private int _bambini;
+        private Sala _sala;
+        private string _descrizione;
+        private string _note;
+        private decimal _sconto;
+        private List<Comande> _comandeReparto;
+
+
+        /// <summary>
+        /// costruisce una nuova istanza di Tavolata vuota.
+        /// </summary>
+        public Tavolata()
+        { }
+
+        /// <summary>
+        /// costruisce una nuova istanza di Tavolata 
+        /// </summary>
+        /// <param name="id">(intero) ID Tavolata</param>
+        public Tavolata(int id)
+        {
+            using (db db = new db())
+            {
+                SqlDataReader r = db.getReader($"select * from tavolata where id_tavolata={id}");
+                if (r.HasRows)
+                {
+                    r.Read();
+                    _id = (int)r[0];
+                    _dataOraArrivo = (DateTime)r[1];
+                    try
+                    {
+                        _dataOraConto = (DateTime)r[2];
+                    }
+                    catch { }
+                    _acconto = decimal.Parse(r[3].ToString());
+                    _stato = (string)r[4];
+                    User user = User.GetUserbyID(r[5].ToString());
+                    if (user == null)
+                    {
+                        user = User.GetUserbyID("999");
+                    }
+                    _operatore = user;
+                    _adulti = (int)r[6];
+                    _bambini = int.Parse(r[7].ToString());
+                    _sala = Sala.getSalaByID((int)r[8]);
+                    _descrizione = r[9].ToString();
+                    _note = r[10].ToString();
+                    try
+                    {
+                        _sconto = decimal.Parse(r[11].ToString());
+                    }
+                    catch { }
+
+                }
+                else
+                {
+
+                    throw new Exception("Nessuna tavolata con questo ID");
+                }
+            }
+
+        }
+
+
+        public int Id { get => _id; set => _id = value; }
+        public DateTime DataOraArrivo { get => _dataOraArrivo; set => _dataOraArrivo = value; }
+        public DateTime DataOraConto { get => _dataOraConto; set => _dataOraConto = value; }
+        public decimal Acconto { get => _acconto; set => _acconto = value; }
+        public string Stato { get => _stato; set => _stato = value; }
+        public User Operatore { get => _operatore; set => _operatore = value; }
+        public int Adulti { get => _adulti; set => _adulti = value; }
+        public int Bambini { get => _bambini; set => _bambini = value; }
+        public Sala Sala { get => _sala; set => _sala = value; }
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        public string Note { get => _note; set => _note = value; }
+        public decimal Sconto { get => _sconto; set => _sconto = value; }
+
+
+        public static List<Tavolata> GetTavolateByOperatore(User operatore)
+        {
+            List<Tavolata> t = new List<Tavolata>();
+            // string endora = "";
+            string ora = "";
+
+            if (DateTime.Now.Hour >= 9 && DateTime.Now.Hour < 17) ora = "12:00"; else ora = "19:00";
+            /*
+            if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
+                else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
+            if (DateTime.Now.Hour >= 0 && DateTime.Now.Hour < 6)
+                endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
+                */
+            string sqlOra12 = $" and Datepart(HOUR, data_ora_arrivo) =12";
+            string sqlOra19 = $" and Datepart(HOUR, data_ora_arrivo) =19";
+            db db = new db(); //SYSDATETIME()
+            string sql = $@"SELECT * from tavolata 
+where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,103)";
+            //"and id_operatore = '{operatore.Id_operatore}' ";
+
+            if (ora.Contains("12")) sql += sqlOra12; else sql += sqlOra19;
+            sql += "  order by descrizione";
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                t.Add(new Tavolata((int)r[0]));
+            }
+            db.Dispose();
+            return t;
+
+        }
+
+        public static List<Tavolata> getTavoliAttiviAlReparto(string idReparto)
+        {
+
+            List<Tavolata> ret = new List<Tavolata>();
+            string endora = "";
+            string ora = "";
+            if (DateTime.Now.Hour >= 12 && DateTime.Now.Hour < 19) ora = "12:00"; else ora = "19:00";
+            if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
+            else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
+            db db = new db();
+            SqlDataReader r = db.getReader($"select * from tavolata where data_ora_arrivo  SYSDATETIME()			 BETWEEN data_ora_arrivo and dateadd(day, 1, data_ora_arrivo) ");
+            while (r.Read())
+            {
+                Tavolata t = new Tavolata(r.GetInt32(0));
+                t.ComandeReparto = Comande.getComandePerReparto(idReparto, t.Id);
+                if (t.ComandeReparto.Count > 0) ret.Add(t);
+            }
+            db.Dispose();
+            return ret;
+        }
+
+        public List<Comande> ComandeReparto
+        {
+            get { return _comandeReparto; }
+            set { _comandeReparto = value; }
+        }
+
+    }
+
+
+    [Serializable]
+    public class Sala
+    {
+        private int _id;
+        private string _descrizione;
+        private int _coperti;
+
+        public int Id { get => _id; set => _id = value; }
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        public int Coperti { get => _coperti; set => _coperti = value; }
+
+        public static Sala getSalaByID(int id)
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"Select *  from sale where id_sala={id.ToString()}");
+            if (r.HasRows)
+            {
+                r.Read();
+                Sala s = new Sala() { Id = (int)r[0], Descrizione = (string)r[1], Coperti = (int)r[2] };
+                db.Dispose();
+                return s;
+            }
+            else
+            {
+                db.Dispose();
+                return null;
+            }
+        }
+
+
+    }
+
+    public class Reparti
+    {
+        public Reparti() { }
+        public Reparti(string idRep)
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"select * from reparti where id_reparto='{idRep}'");
+            r.Read();
+            this.id_reparto = idRep;
+            this.descrizione = r[1].ToString();
+            this.ip_stampante = r[2].ToString();
+            this.nomestampante = r[3].ToString();
+            db.Dispose();
+        }
+        public string id_reparto { get; set; }
+        public string descrizione { get; set; }
+        public string ip_stampante { get; set; }
+        public string nomestampante { get; set; }
+    }
+
+
+
+
+    [Serializable]
+    public class Comande
+    {
+        private int _idComande;
+        private string _stato;
+        private int _idTavolata;
+        private string _descrizioneTavolata;
+        private string _idPietanza;
+        private string _descrizionPietanza;
+        private int _quantita;
+        private string _variazioni;
+        private DateTime _OraComanda;
+        private string _operatore;
+        private int _isExtra;
+        private string _sala;
+
+        public Comande() { }
+        public Comande(int id)
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader("select * from comande where id_comanda=" + id.ToString());
+            r.Read();
+
+            _idComande = r.GetInt32(0);
+            _stato = r[1].ToString();
+            _idTavolata = r.GetInt32(2);
+            _idPietanza = r[3].ToString();
+            _quantita = r.GetInt32(4);
+            _variazioni = r[5].ToString();
+            try
+            {
+                _OraComanda = r.GetDateTime(6);
+            }
+            catch (Exception ex) { }
+            db.Dispose();
+        }
+
+        public int IdComande { get => _idComande; set => _idComande = value; }
+        public string Stato { get => _stato; set => _stato = value; }
+        public int IdTavolata { get => _idTavolata; set => _idTavolata = value; }
+        public string IdPietanza { get => _idPietanza; set => _idPietanza = value; }
+        public int Quantita { get => _quantita; set => _quantita = value; }
+        public string Variazioni { get => _variazioni; set => _variazioni = value; }
+        public int IsExtra { get => _isExtra; set => _isExtra = value; }
+        public DateTime OraComanda { get => _OraComanda; set => _OraComanda = value; }
+        public string DescrizioneTavolata { get => _descrizioneTavolata; set => _descrizioneTavolata = value; }
+        public string DescrizionPietanza { get => _descrizionPietanza; set => _descrizionPietanza = value; }
+        public string Operatore { get => _operatore; set => _operatore = value; }
+        public string Sala { get => _sala; set => _sala = value; }
+
+        public static Dictionary<string, List<Comande>> getComandeByStatoPerRep(string stato, int idTavolata)
+        {
+            Dictionary<string, List<Comande>> lstRet = new Dictionary<string, List<Comande>>();
+
+            db db = new db();
+            string sqlRep = $@"select rp.descrizione , rp.id_reparto
+                             from comande c,
+	                            reparti  rp,
+	                            pietanze p
+                            where c.id_tavolata = {idTavolata}
+	                            and p.id_pietanza = c.id_pietanza
+	                            and rp.id_reparto = p.reparto
+                                and c.stato = '{stato}'
+                            group by rp.descrizione, rp.id_reparto";
+
+            SqlDataReader rRep = db.getReader(sqlRep);
+            while (rRep.Read())
+            {
+                List<Comande> lst = new List<Comande>();
+                db db2 = new db();
+
+
+                string sql = $@"select * from comande where  id_tavolata={idTavolata} and 
+	                            id_pietanza in (select id_pietanza from pietanze where reparto = '{rRep[1].ToString()}') 
+	                            and stato = '{stato}' order by id_pietanza";
+
+
+                SqlDataReader r = db2.getReader(sql);
+                while (r.Read())
+                {
+
+                    Comande c = new Comande();
+                    c.IdComande = r.GetInt32(0);
+                    c.Stato = r[1].ToString();
+                    c.IdTavolata = r.GetInt32(2);
+                    Tavolata tav = new Tavolata(c.IdTavolata);
+                    c._idPietanza = r[3].ToString();
+                    c._descrizionPietanza = new Pietanza(c.IdPietanza).Descrizione;
+                    c._descrizioneTavolata = tav.Descrizione;
+
+                    c._operatore = tav.Operatore.Nominativo;
+                    c.Quantita = r.GetInt32(4);
+                    c.Variazioni = r[5].ToString();
+                    try
+                    {
+                        c.OraComanda = r.GetDateTime(6);
+                    }
+                    catch (Exception ex) { }
+                    c.Sala = tav.Sala.Descrizione;
+
+                    lst.Add(c);
+                }
+                lstRet.Add(rRep[1].ToString(), lst);
+                db2.Dispose();
+            }
+
+            db.Dispose();
+            return lstRet;
+        }
+
+        public static bool CheckVariazioneStato(string statoClient, int idComanda)
+        {
+            Comande c = new Comande(idComanda);
+            if (c.Stato == statoClient) return false; else return true;
+        }
+
+
+        public static List<Comande> getComandePerReparto(string idreparto, int idTavolata)
+        {
+
+            List<Comande> listRet = new List<Comande>();
+            db db = new db();
+            string sql = $@" select * from comande 
+	                            where   
+	                            id_pietanza in (select id_pietanza from pietanze where reparto = '{idreparto}')
+	                            and stato not in ('attesa','annullato','pronto') 
+	                            and id_tavolata in 
+                                (select id_tavolata from tavolata t 
+                                    where id_tavolata={idTavolata.ToString()}";
+            //t.data_ora_arrivo = convert(datetime, '{timestamp.ToShortDateString()}',103))
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                Comande c = new Comande();
+                c.IdComande = r.GetInt32(0);
+                c.Stato = r[1].ToString();
+                c.IdTavolata = r.GetInt32(2);
+                c._idPietanza = r[3].ToString();
+                c.Quantita = r.GetInt32(4);
+                c.Variazioni = r[5].ToString();
+                try
+                {
+                    c.OraComanda = r.GetDateTime(6);
+                }
+                catch (Exception ex) { }
+                listRet.Add(c);
+            }
+            db.Dispose();
+            return listRet;
+        }
+        /*
+        
+         */
+    }
+    [Serializable]
+    public struct StatoComande
+    {
+        private string _id_comanda;
+        private string _stato;
+        private string _id_pietanza;
+        private string _desc_pietanza;
+        private string _quantita;
+        private string _variazioni;
+        private string _id_tipo;
+        private string _desc_tipo;
+        private string _id_reparto;
+        private string _reparto;
+
+        public string Id_comanda { get => _id_comanda; set => _id_comanda = value; }
+        public string Stato { get => _stato; set => _stato = value; }
+        public string Id_pietanza { get => _id_pietanza; set => _id_pietanza = value; }
+        public string Quantita { get => _quantita; set => _quantita = value; }
+        public string Variazioni { get => _variazioni; set => _variazioni = value; }
+        public string Id_tipo { get => _id_tipo; set => _id_tipo = value; }
+        public string Id_reparto { get => _id_reparto; set => _id_reparto = value; }
+        public string Reparto { get => _reparto; set => _reparto = value; }
+        public string Desc_pietanza { get => _desc_pietanza; set => _desc_pietanza = value; }
+        public string Desc_tipo { get => _desc_tipo; set => _desc_tipo = value; }
+    }
+
+    [Serializable]
+    public class TestaConto
+    {
+        private int _idTavolata;
+        private string _tavolata;
+        private string _data_ora;
+        private float _acconto;
+        private float _sconto;
+        private string _sala;
+        private string _cameriere;
+
+        public string Tavolata { get => _tavolata; set => _tavolata = value; }
+        public string Data_ora { get => _data_ora; set => _data_ora = value; }
+        public float Acconto { get => _acconto; set => _acconto = value; }
+        public float Sconto { get => _sconto; set => _sconto = value; }
+        public string Sala { get => _sala; set => _sala = value; }
+        public string Cameriere { get => _cameriere; set => _cameriere = value; }
+        public int IdTavolata { get => _idTavolata; set => _idTavolata = value; }
+    }
+
+    [Serializable]
+    public struct InsertExtra
+    {
+        private DateTime _data;
+        private string _idpietanza;
+        private float _prezzo;
+        private int _quantita;
+
+        public DateTime Data { get => _data; set => _data = value; }
+        public string Idpietanza { get => _idpietanza; set => _idpietanza = value; }
+        public float Prezzo { get => _prezzo; set => _prezzo = value; }
+        public int Quantita { get => _quantita; set => _quantita = value; }
+    }
+
+    [Serializable]
+    public class IncassoGiorno
+    {
+        private DateTime _dateTime;
+        private string _descrizione1;
+        private string _descrizione2;
+        private float _prezzo;
+        private float _quantita;
+        private float _acconto;
+        private float _sconto;
+        private float _totale;
+
+        public DateTime DateTime { get => _dateTime; set => _dateTime = value; }
+        public string Descrizione1 { get => _descrizione1; set => _descrizione1 = value; }
+        public string Descrizione2 { get => _descrizione2; set => _descrizione2 = value; }
+        public float Prezzo { get => _prezzo; set => _prezzo = value; }
+        public float Quantita { get => _quantita; set => _quantita = value; }
+        public float Acconto { get => _acconto; set => _acconto = value; }
+        public float Sconto { get => _sconto; set => _sconto = value; }
+        public float Totale { get => _totale; set => _totale = value; }
+
+    }
+    [Serializable]
+    public class CorpoConto
+    {
+        private string _id;
+        private string _menu_portata;
+        private float _quantita;
+        private float _prezzo_unitario;
+        private float _totale;
+        private float _granTotale;
+
+        public string Id { get => _id; set => _id = value; }
+        public string Menu_portata { get => _menu_portata; set => _menu_portata = value; }
+        public float Quantita { get => _quantita; set => _quantita = value; }
+        public float Prezzo_unitario { get => _prezzo_unitario; set => _prezzo_unitario = value; }
+        public float Totale { get => _totale; set => _totale = value; }
+        public float GranTotale { get => _granTotale; set => _granTotale = value; }
+    }
+    [Serializable]
+    public struct ordine
+    {
+        private string _id_tavolata;
+        private string _id_voce;
+        private int _quantita;
+        private string _note_pietanza;
+
+        public string Id_tavolata { get => _id_tavolata; set => _id_tavolata = value; }
+        public string Id_voce { get => _id_voce; set => _id_voce = value; }
+        public int Quantita { get => _quantita; set => _quantita = value; }
+        public string Note_pietanza { get => _note_pietanza; set => _note_pietanza = value; }
+    }
+    [Serializable]
+    public class User
+    {
+        private string _id_operatore;
+        private string _nominativo;
+        private string _pin;
+
+        public string Id_operatore { get => _id_operatore; set => _id_operatore = value; }
+        public string Nominativo { get => _nominativo; set => _nominativo = value; }
+        public string Pin { get => _pin; set => _pin = value; }
+
+        public static User GetUserbyID(string id)
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"Select *  from operatori where id_operatore='{id.ToString()}'");
+            if (r.HasRows)
+            {
+                r.Read();
+                User u = new User() { Id_operatore = (string)r[0], Nominativo = (string)r[1], Pin = (string)r[2] };
+                db.Dispose();
+                return u;
+            }
+            else
+            {
+                db.Dispose();
+                return null;
+
+            }
+        }
+    }
+    [Serializable]
+    public class Pietanza
+    {
+        private string _id_pietanza;
+        private string _descrizione;
+        private float _prezzo;
+        private string _reparto;
+        private int _attivo;
+        private int _id_tipo;
+
+        public Pietanza() { }
+
+        public Pietanza(string ID)
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"select * from pietanze where id_pietanza='{ID}'");
+            if (r.HasRows)
+            {
+                r.Read();
+                _id_pietanza = r[0].ToString();
+                _descrizione = r[1].ToString();
+                _prezzo = float.Parse(r[2].ToString());
+                _reparto = r[3].ToString();
+                _attivo = r.GetInt32(4);
+                _id_tipo = r.GetInt32(5);
+            }
+            else
+            {
+                throw new Exception("Nessuna Pietanza con questo ID");
+            }
+            db.Dispose();
+        }
+
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        public float Prezzo { get => _prezzo; set => _prezzo = value; }
+        public string Reparto { get => _reparto; set => _reparto = value; }
+        public string Id_pietanza { get => _id_pietanza; set => _id_pietanza = value; }
+        public int Attivo { get => _attivo; set => _attivo = value; }
+        public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
+    }
+    [Serializable]
+    public struct trovato //usato nel metodo TROVATO  per restituire un booleano se esiste un record con ID_OPERATORE - PIN per login cameriere
+    {
+        private Boolean _trovato;
+
+        public bool Trovato { get => _trovato; set => _trovato = value; }
+        public string Nominativo { get; set; }
+
+    }
+    [Serializable]
+    public struct Menu
+    {
+        private string _id_menu;
+        private string _descrizione;
+        private string _tipo;
+        private float _prezzo;
+        private string _occasione;
+        private bool _stato;
+        private int _quantita;
+
+        public string Id_menu { get => _id_menu; set => _id_menu = value; }
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        public string Tipo { get => _tipo; set => _tipo = value; }
+        public float Prezzo { get => _prezzo; set => _prezzo = value; }
+        public string Occasione { get => _occasione; set => _occasione = value; }
+        public bool Stato { get => _stato; set => _stato = value; }
+        public int QuantitaOrdinata { get => _quantita; set => _quantita = value; }
+    }
+    [Serializable]
+    public struct Menudettaglio
+    {
+        private string _id_pietanza;
+        private string _descrizione;
+        //private float _prezzo;
+        private string _reparto;
+        private int _stato;
+        private int _id_tipo;
+        private string _num_alternanza;
+
+        public string Id_pietanza { get => _id_pietanza; set => _id_pietanza = value; }
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        //public float Prezzo { get => _prezzo; set => _prezzo = value; }
+        public string Reparto { get => _reparto; set => _reparto = value; }
+        public int Stato { get => _stato; set => _stato = value; }
+        public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
+        public string Num_alternanza { get => _num_alternanza; set => _num_alternanza = value; }
+    }
+}
