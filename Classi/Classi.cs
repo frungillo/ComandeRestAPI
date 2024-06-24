@@ -1,4 +1,5 @@
-﻿using System.Data.SqlClient;
+﻿using Newtonsoft.Json;
+using System.Data.SqlClient;
 
 namespace ComandeRestAPI.Classi
 {
@@ -39,6 +40,23 @@ namespace ComandeRestAPI.Classi
         }
     }
 
+    public class TavolataMini
+    {
+        public int NumeroTavolo { get; set; }
+        public int IdOperatore { get; set; }
+        public string Descrizione { get; set; }
+        public string Note { get; set; }
+        public int Adulti { get; set; }
+        public int Bambini { get; set; }
+        public int IdSala { get; set; }
+
+        // Costruttore
+        public TavolataMini() { }
+
+        
+    }
+
+
     [Serializable]
     public class Tavolata
     {
@@ -70,18 +88,26 @@ namespace ComandeRestAPI.Classi
         public int Id_stato { get => _id_stato; set => _id_stato = value; }
         public Stato Stato { get => _stato; set => _stato = value; }
         public Operatori Operatore { get => _operatore; set => _operatore = value; }
+        [JsonProperty("adulti")]
         public int Adulti { get => _adulti; set => _adulti = value; }
+        [JsonProperty("bambini")]
         public int Bambini { get => _bambini; set => _bambini = value; }
+        
+        [JsonProperty("id_sala")]
         public int Id_sala { get => _id_sala; set => _id_sala = value; }
         public Sala Sala { get => _sala; set => _sala = value; }
+        [JsonProperty("descrizione")]
         public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        [JsonProperty("note")]
         public string Note { get => _note; set => _note = value; }
         public decimal Sconto { get => _sconto; set => _sconto = value; }
+        [JsonProperty("numero_tavolo")]
         public int Numero_tavolo { get => _numero_tavolo; set => _numero_tavolo = value; }
         public int Id_cliente { get => _id_cliente; set => _id_cliente = value; }
         public decimal Preconto { get => _preconto; set => _preconto = value; }
         public decimal Conto { get => _conto; set => _conto = value; }
         public string Item { get => _item; set => _item = value; }
+        [JsonProperty("id_operatore")]
         public int Id_operatore { get => _id_operatore; set => _id_operatore = value; }
 
         public Tavolata()  { }

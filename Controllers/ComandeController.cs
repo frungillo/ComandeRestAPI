@@ -472,7 +472,7 @@ namespace ComandeRestAPI.Controllers
 
         }
         [HttpPost("creaTavolata")]
-        public IActionResult creaTavolata(int id_operatore, string descrizione, string note, int adulti, int bambini, int numero_tavolo, int id_sala)
+        public IActionResult creaTavolata([FromBody] TavolataMini t)
         {
             string ora = "";
             if (DateTime.Now.Hour >= 10 && DateTime.Now.Hour < 19) ora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 12:00' , 103)";
@@ -482,14 +482,14 @@ namespace ComandeRestAPI.Controllers
             string sql = @$"insert into tavolata (data_ora_arrivo,id_operatore, stato, descrizione, adulti, bambini, numero_tavolo, note, id_sala)
                             values (
                                                 {ora},
-                                                {id_operatore},
+                                                {t.IdOperatore},
                                                 1,
-                                                '{descrizione}',
-                                                {adulti},
-                                                {bambini},
-                                                {numero_tavolo},
-                                                '{note}',
-                                                {id_sala})";
+                                                '{t.Descrizione}',
+                                                {t.Adulti},
+                                                {t.Bambini},
+                                                {t.NumeroTavolo},
+                                                '{t.Note}',
+                                                {t.IdSala})";
 
             db db = new db();
             db.getReader(sql);
