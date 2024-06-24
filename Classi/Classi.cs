@@ -46,10 +46,13 @@ namespace ComandeRestAPI.Classi
         private DateTime _dataOraArrivo;
         private DateTime _dataOraConto;
         private decimal _acconto;
+        private int _id_stato;
         private Stato _stato;
+        private int _id_operatore;
         private Operatori _operatore;
         private int _adulti;
         private int _bambini;
+        private int _id_sala;
         private Sala _sala;
         private string _descrizione;
         private string _note;
@@ -59,17 +62,17 @@ namespace ComandeRestAPI.Classi
         private decimal _conto;
         private string _item;
         private int _numero_tavolo;
-        private List<Comande> _comandeReparto;
-
-
+      
         public int Id { get => _id; set => _id = value; }
         public DateTime DataOraArrivo { get => _dataOraArrivo; set => _dataOraArrivo = value; }
         public DateTime DataOraConto { get => _dataOraConto; set => _dataOraConto = value; }
         public decimal Acconto { get => _acconto; set => _acconto = value; }
+        public int Id_stato { get => _id_stato; set => _id_stato = value; }
         public Stato Stato { get => _stato; set => _stato = value; }
         public Operatori Operatore { get => _operatore; set => _operatore = value; }
         public int Adulti { get => _adulti; set => _adulti = value; }
         public int Bambini { get => _bambini; set => _bambini = value; }
+        public int Id_sala { get => _id_sala; set => _id_sala = value; }
         public Sala Sala { get => _sala; set => _sala = value; }
         public string Descrizione { get => _descrizione; set => _descrizione = value; }
         public string Note { get => _note; set => _note = value; }
@@ -79,6 +82,7 @@ namespace ComandeRestAPI.Classi
         public decimal Preconto { get => _preconto; set => _preconto = value; }
         public decimal Conto { get => _conto; set => _conto = value; }
         public string Item { get => _item; set => _item = value; }
+        public int Id_operatore { get => _id_operatore; set => _id_operatore = value; }
 
         public Tavolata()  { }
 
@@ -98,15 +102,18 @@ namespace ComandeRestAPI.Classi
                     }
                     catch { }
                     _acconto = decimal.Parse(r[3].ToString());
+                    _id_stato = r.GetInt32(4);
                     Stato stato = new Stato(r.GetInt32(4));
                     Operatori user = new  Operatori(r.GetInt32(5));
                     if (user == null)
                     {
                         user = new Operatori(999);
                     }
+                    _stato= stato;
                     _operatore = user;
                     _adulti = (int)r[6];
                     _bambini = int.Parse(r[7].ToString());
+                    _id_sala = r.GetInt32(8);
                     _sala = Sala.getSalaByID((int)r[8]);
                     _descrizione = r[9].ToString();
                     _note = r[10].ToString();
@@ -163,7 +170,7 @@ namespace ComandeRestAPI.Classi
             // string endora = "";
             string ora = "";
 
-            if (DateTime.Now.Hour >= 9 && DateTime.Now.Hour < 17) ora = "12:00"; else ora = "19:00";
+            if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 17) ora = "12:00"; else ora = "19:00";
             /*
             if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
                 else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
@@ -186,7 +193,7 @@ namespace ComandeRestAPI.Classi
             return t;
 
         }
-
+        /*
         public static List<Tavolata> getTavoliAttiviAlReparto(string idReparto)
         {
 
@@ -206,17 +213,11 @@ namespace ComandeRestAPI.Classi
             }
             db.Dispose();
             return ret;
-        }
-
-        public List<Comande> ComandeReparto
-        {
-            get { return _comandeReparto; }
-            set { _comandeReparto = value; }
-        }
-
-
     }
 
+
+        */
+    }
 
     [Serializable]
     public class Sala
@@ -269,9 +270,6 @@ namespace ComandeRestAPI.Classi
         public string ip_stampante { get; set; }
         public string nomestampante { get; set; }
     }
-
-
-
 
     [Serializable]
     public class Comande
@@ -536,7 +534,41 @@ namespace ComandeRestAPI.Classi
         public int Quantita { get => _quantita; set => _quantita = value; }
         public string Note_pietanza { get => _note_pietanza; set => _note_pietanza = value; }
     }
+    /*
+     * CREO CLASSI DI SERVIZIO PER LA CLASSE PIETANZA
+     */
+    public class TipiPietanze 
+    {
+        private int _id_tipo;
+        private string _descrizione;
+        //private string _image;
+
+        public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        //public string Image { get => _image; set => _image = value; }
+
+        public TipiPietanze() { }
+        public TipiPietanze(int id) 
+        {
+            db db = new db();
+            SqlDataReader r = db.getReader($"select * from tipi_pietanze where id_tipo={id}");
+            if (r.HasRows)
+            {
+                r.Read();
+                Id_tipo = r.GetInt32(0);
+                Descrizione = r[1].ToString();
+                //Image = r[2].ToString();
+               
+            }
+            else
+            {
+                throw new Exception("Nessun Tipo_Pietanza con questo ID");
+            }
+            db.Dispose();
+        }
     
+    }
+  
     [Serializable]
     public class Pietanza
     {
@@ -546,6 +578,17 @@ namespace ComandeRestAPI.Classi
         private string _reparto;
         private int _attivo;
         private int _id_tipo;
+        private Reparti _repartoClasse;
+        private TipiPietanze _tipo_pietanze;
+
+        public string Id_pietanza { get => _id_pietanza; set => _id_pietanza = value; }
+        public string Descrizione { get => _descrizione; set => _descrizione = value; }
+        public float Prezzo { get => _prezzo; set => _prezzo = value; }
+        public string Reparto { get => _reparto; set => _reparto = value; }
+        public int Attivo { get => _attivo; set => _attivo = value; }
+        public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
+        public Reparti RepartoClasse { get => _repartoClasse; set => _repartoClasse = value; }
+        public TipiPietanze Tipo_pietanze { get => _tipo_pietanze; set => _tipo_pietanze = value; }
 
         public Pietanza() { }
 
@@ -556,12 +599,14 @@ namespace ComandeRestAPI.Classi
             if (r.HasRows)
             {
                 r.Read();
-                _id_pietanza = r[0].ToString();
-                _descrizione = r[1].ToString();
-                _prezzo = float.Parse(r[2].ToString());
-                _reparto = r[3].ToString();
-                _attivo = r.GetInt32(4);
-                _id_tipo = r.GetInt32(5);
+                Id_pietanza = r[0].ToString();
+                Descrizione = r[1].ToString();
+                Prezzo = float.Parse(r[2].ToString());
+                Reparto = r[3].ToString();
+                Attivo = r.GetInt32(4);
+                Id_tipo = r.GetInt32(5);
+                RepartoClasse= new Reparti(r[3].ToString());
+                Tipo_pietanze = new TipiPietanze(r.GetInt32(5));
             }
             else
             {
@@ -570,12 +615,23 @@ namespace ComandeRestAPI.Classi
             db.Dispose();
         }
 
-        public string Descrizione { get => _descrizione; set => _descrizione = value; }
-        public float Prezzo { get => _prezzo; set => _prezzo = value; }
-        public string Reparto { get => _reparto; set => _reparto = value; }
-        public string Id_pietanza { get => _id_pietanza; set => _id_pietanza = value; }
-        public int Attivo { get => _attivo; set => _attivo = value; }
-        public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
+        public static List<Pietanza> GetPietanzeAttive() 
+        {
+            List<Pietanza> list = new List<Pietanza>();
+       
+            db db = new db(); 
+            string sql = $@"SELECT * from pietanze where attivo=1 order by reparto, descrizione";
+
+      
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                list.Add(new Pietanza(r[0].ToString()));
+            }
+            db.Dispose();
+            return list;
+        }
+      
     }
     [Serializable]
     public struct trovato //usato nel metodo TROVATO  per restituire un booleano se esiste un record con ID_OPERATORE - PIN per login cameriere
@@ -605,6 +661,7 @@ namespace ComandeRestAPI.Classi
         public bool Stato { get => _stato; set => _stato = value; }
         public int QuantitaOrdinata { get => _quantita; set => _quantita = value; }
     }
+   
     [Serializable]
     public struct Menudettaglio
     {
@@ -624,7 +681,7 @@ namespace ComandeRestAPI.Classi
         public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
         public string Num_alternanza { get => _num_alternanza; set => _num_alternanza = value; }
     }
-
+    
     [Serializable]
     public class Operatori 
     {

@@ -81,6 +81,13 @@ namespace ComandeRestAPI.Controllers
             return Ok(names);
         }
 
+        [HttpGet("getPietanzeAttive")]
+        public ActionResult<IEnumerable<Pietanza>> GetPietanzeAttive()
+        {
+            
+            return Ok(Pietanza.GetPietanzeAttive());
+        }
+
         [HttpGet("getMenu")]
         public ActionResult<IEnumerable<Menu>> GetMenu()
         {
@@ -170,7 +177,13 @@ namespace ComandeRestAPI.Controllers
             list=Tavolata.GetTavolateByIdOperatore(id_operatore);
             return Ok(list);
         }
-
+        [HttpGet("getTavolateOdierne")]
+        public ActionResult<IEnumerable<Tavolata>> GetTavolateOdierne()
+        {
+            List<Tavolata> list = new List<Tavolata>();
+            list = Tavolata.GetTavolateOdierne();
+            return Ok(list);
+        }
         [HttpGet("getTestataConto")]
         public ActionResult<TestaConto> GetTestataConto(int idtavolata)
         {
@@ -406,17 +419,83 @@ namespace ComandeRestAPI.Controllers
         }
 
         [HttpPost("aggiornaTavolo")]
-        public IActionResult AggiornaTavolo(int idTavolata, string acconto, string sconto)
+        public IActionResult AggiornaTavolo([FromBody] Tavolata ta)
         {
-            if (acconto == "") acconto = "0.0";
-            if (sconto == "") sconto = "0.0";
-            string sql = $"update tavolata set acconto={acconto.Replace(",", ".")}, sconto={sconto.Replace(",", ".")} where id_tavolata={idTavolata}";
+            //if (ta.Acconto == "") acconto = "0.0";
+            //if (sconto == "") sconto = "0.0";
+            string sql = @$"update tavolata set 
+                            acconto={ta.Acconto}, 
+                            stato={ta.Id_stato},
+                            adulti={ta.Adulti},
+                            bambini={ta.Bambini},
+                            id_sala={ta.Id_sala},
+                            descrizione='{ta.Descrizione}',
+                            note='{ta.Note}',
+                            sconto={ta.Sconto},
+                            id_cliente={ta.Id_cliente},         
+                            preconto={ta.Preconto},
+                            conto={ta.Conto},
+                            numero_tavolo={ta.Numero_tavolo}
+                            where id_tavolata={ta.Id}";
             db db = new db();
             db.getReader(sql);
             db.Dispose();
             return Ok();
         }
+        [HttpPost("insertTavolata")]
+        public IActionResult insertTavolata([FromBody] Tavolata ta)
+        {
+            
+            
+            string sql = @$"insert into tavolata (
+                                                convert(date,{DateTime.Now},
+                                                null,
+                                                {ta.Acconto},
+                                                {ta.Stato},
+                                                {ta.Id_operatore},
+                                                {ta.Adulti},
+                                                {ta.Bambini},
+                                                {ta.Id_sala},
+                                                '{ta.Descrizione}'
+                                                '{ta.Note}',    
+                                                {ta.Sconto},
+                                                {ta.Id_cliente},
+                                                {ta.Preconto},
+                                                {ta.Conto},
+                                                '{ta.Item}',
+                                                {ta.Numero_tavolo})";
 
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
+
+        }
+        [HttpPost("creaTavolata")]
+        public IActionResult creaTavolata(int id_operatore, string descrizione, string note, int adulti, int bambini, int numero_tavolo, int id_sala)
+        {
+            string ora = "";
+            if (DateTime.Now.Hour >= 10 && DateTime.Now.Hour < 19) ora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 12:00' , 103)";
+            else ora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 19:00', 103)";
+           
+          
+            string sql = @$"insert into tavolata (data_ora_arrivo,id_operatore, stato, descrizione, adulti, bambini, numero_tavolo, note, id_sala)
+                            values (
+                                                {ora},
+                                                {id_operatore},
+                                                1,
+                                                '{descrizione}',
+                                                {adulti},
+                                                {bambini},
+                                                {numero_tavolo},
+                                                '{note}',
+                                                {id_sala})";
+
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
+        }
         [HttpPost("salvaOrdine")]
         public IActionResult SalvaOrdine(int idOrdine, int quantita, bool delete)
         {
@@ -715,24 +794,21 @@ namespace ComandeRestAPI.Controllers
             return Ok(namemd);
         }
 
-        [HttpGet("getPulsantiPietanze")]
-        public ActionResult<string> GetPulsantiPietanze()
+        [HttpGet("getTipiPietanze")]
+        public ActionResult<List<TipiPietanze>> GetPulsantiPietanze()
         {
-            string html = "";
+            List<TipiPietanze> list = new List<TipiPietanze>();
+
             db db = new db();
-            string sql = $@"
-                select * from tipi_pietanze 
-                where (select count(*) from pietanze where attivo=1 and pietanze.id_tipo = tipi_pietanze.id_tipo) >= 1 
-                order by descrizione";
+            string sql = $@" select * from tipi_pietanze where (select count(*) from pietanze where attivo=1 and pietanze.id_tipo = tipi_pietanze.id_tipo) >= 1 order by descrizione";
             SqlDataReader r = db.getReader(sql);
-            html = "<table style='overflow:auto;'><tr>";
+          
             while (r.Read())
             {
-                html += $"<td><input type='button' id='btn_gp_{r[0].ToString()}' value='{r[1].ToString()}' onclick=\"getPietanzeByTipo({r[0].ToString()})\" /></td>";
+                list.Add(new  TipiPietanze(r.GetInt32(0)));
             }
-            html += "</tr></table>";
-            db.Dispose();
-            return Ok(html);
+           
+            return Ok(list);
         }
 
         [HttpGet("getPietanzeByTipo")]
