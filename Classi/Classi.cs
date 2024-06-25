@@ -130,13 +130,14 @@ namespace ComandeRestAPI.Classi
                     _acconto = decimal.Parse(r[3].ToString());
                     _id_stato = r.GetInt32(4);
                     Stato stato = new Stato(r.GetInt32(4));
-                    Operatori user = new  Operatori(r.GetInt32(5));
-                    if (user == null)
+                    try
                     {
-                        user = new Operatori(999);
-                    }
+                        Operatori user = new Operatori(r.GetInt32(5));
+                        _operatore = user;
+                    } catch { }
+                    
                     _stato= stato;
-                    _operatore = user;
+                    
                     _adulti = (int)r[6];
                     _bambini = int.Parse(r[7].ToString());
                     _id_sala = r.GetInt32(8);
@@ -206,7 +207,7 @@ namespace ComandeRestAPI.Classi
             string sqlOra12 = $" and Datepart(HOUR, data_ora_arrivo) =12";
             string sqlOra19 = $" and Datepart(HOUR, data_ora_arrivo) =19";
             db db = new db(); //SYSDATETIME()
-            string sql = $@"SELECT * from tavolata where CONVERT(VARCHAR(10),GETDATE(),103) = CONVERT(VARCHAR(10),data_ora_arrivo,103)";
+            string sql = $@"SELECT * from tavolata where  GETDATE() between data_ora_arrivo and DATEADD(hour,9, data_ora_arrivo)";
 
             if (ora.Contains("12")) sql += sqlOra12; else sql += sqlOra19;
             sql += "  order by descrizione";
