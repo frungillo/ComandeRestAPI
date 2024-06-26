@@ -496,24 +496,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-        [HttpPost("salvaOrdine")]
-        public IActionResult SalvaOrdine(int idOrdine, int quantita, bool delete)
-        {
-            string sql;
-            if (delete)
-            {
-                sql = "delete ordini where id_ordine=" + idOrdine.ToString();
-            }
-            else
-            {
-                sql = "update ordini set quantita=" + quantita.ToString() + " where id_ordine=" + idOrdine.ToString();
-            }
-            db db = new db();
-            db.getReader(sql);
-            db.Dispose();
-            return Ok();
-        }
-
+       
         [HttpPost("salvaPrestazioneExtra")]
         public IActionResult SalvaPrestazioneExtra(int IdPrestazione, string prezzo, bool delete)
         {
@@ -856,6 +839,24 @@ namespace ComandeRestAPI.Controllers
             db.getReader($"update tavolata set stato ='2' where id_tavolata ={id_tavolata} ");
             db.Dispose();
             return Ok(id_voce.ToString());
+        }
+
+        [HttpPost("salvaOrdine")]
+        public IActionResult SalvaOrdine(int idOrdine, int quantita, bool delete)
+        {
+            string sql;
+            if (delete)
+            {
+                sql = "delete ordini where id_ordine=" + idOrdine.ToString();
+            }
+            else
+            {
+                sql = "update ordini set quantita=" + quantita.ToString() + " where id_ordine=" + idOrdine.ToString();
+            }
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
         }
 
         private int CheckStatoTavolo(int idTsavolo)

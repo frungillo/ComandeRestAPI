@@ -207,7 +207,7 @@ namespace ComandeRestAPI.Classi
             string sqlOra12 = $" and Datepart(HOUR, data_ora_arrivo) =12";
             string sqlOra19 = $" and Datepart(HOUR, data_ora_arrivo) =19";
             db db = new db(); //SYSDATETIME()
-            string sql = $@"SELECT * from tavolata where  GETDATE() between data_ora_arrivo and DATEADD(hour,9, data_ora_arrivo)";
+            string sql = $@"SELECT * from tavolata where  GETDATE() between DATEADD(hour,-9, data_ora_arrivo) and DATEADD(hour,9, data_ora_arrivo)";
 
             if (ora.Contains("12")) sql += sqlOra12; else sql += sqlOra19;
             sql += "  order by descrizione";
