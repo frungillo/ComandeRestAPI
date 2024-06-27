@@ -1123,11 +1123,11 @@ namespace ComandeRestAPI.Controllers
                 db.getReader("update tavolata set stato=4 where id_tavolata=" + idTavolo);
                 db.Dispose();
                 ReportDocument doc = new ReportDocument();
-                var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "test.rpt");
+                var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
                 doc.Load(reportPath);
                 doc.PrintOptions.PrinterName = "POS-CASSA";
                 doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
-                doc.SetDatabaseLogon("jmk", "napoli.081");
+                doc.SetDatabaseLogon("sa", "avellino.081");
                 doc.SetParameterValue(0, idTavolo);
                 doc.SetParameterValue(1, 0);
                 doc.PrintToPrinter(1, false, 0, 0);
@@ -1152,11 +1152,11 @@ namespace ComandeRestAPI.Controllers
                 db.getReader("update tavolata set stato=5 where id_tavolata=" + idTavolo);
                 db.Dispose();
                 ReportDocument doc = new ReportDocument();
-                var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "test.rpt");
+                var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
                 doc.Load(reportPath);
                 doc.PrintOptions.PrinterName = "POS-CASSA";
                 doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
-                doc.SetDatabaseLogon("jmk", "napoli.081");
+                doc.SetDatabaseLogon("sa", "avellino.081");
                 doc.SetParameterValue(0, idTavolo);
                 doc.SetParameterValue(1, 1);
                 doc.PrintToPrinter(1, false, 0, 0);
