@@ -568,11 +568,11 @@ namespace ComandeRestAPI.Classi
     {
         private int _id_tipo;
         private string _descrizione;
-        //private string _image;
+        private string _image;
 
         public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
         public string Descrizione { get => _descrizione; set => _descrizione = value; }
-        //public string Image { get => _image; set => _image = value; }
+        public string Image { get => _image; set => _image = value; }
 
         public TipiPietanze() { }
         public TipiPietanze(int id) 
@@ -584,7 +584,7 @@ namespace ComandeRestAPI.Classi
                 r.Read();
                 Id_tipo = r.GetInt32(0);
                 Descrizione = r[1].ToString();
-                //Image = r[2].ToString();
+                Image = r[2].ToString();
                
             }
             else
