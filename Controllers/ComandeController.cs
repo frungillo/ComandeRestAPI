@@ -9,17 +9,33 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using CrystalDecisions.CrystalReports.Engine;
+using System.Net.Http;
+
 using static ComandeRestAPI.Classi.ClassiStampa;
 
 namespace ComandeRestAPI.Controllers
 {
+   
+    
+
+
     [Route("api/[controller]")]
     [ApiController]
     public class ComandeController : ControllerBase
     {
+       
+        private readonly HttpClient _client;
+
         private readonly SqlConnection _conn = new SqlConnection(db.connStr());
 
         private readonly IWebHostEnvironment _env;
+
+        public ComandeController(IHttpClientFactory clientFactory)
+        {
+            _client = clientFactory.CreateClient();
+            _client.BaseAddress = new Uri("https://example.com/path-to-asmx-service/");
+            // Impostazioni aggiuntive per HttpClient, se necessario
+        }
 
         public ComandeController(IWebHostEnvironment env, SqlConnection conn)
         {
@@ -1112,64 +1128,116 @@ namespace ComandeRestAPI.Controllers
             Print(PrinterName(rep.nomestampante), GetDocument());
             return Ok();
         }
-
-        [HttpPost("stampaContoTavolo")]
-        public IActionResult StampaContoTavolo(string idTavolo)
+               
+        [HttpGet("StampaContoTavolo")]
+        public async Task<IActionResult> StampaContoTavolo(string idTavolo)
         {
-            logEventi log = new logEventi();
             try
             {
-                db db = new db();
-                db.getReader("update tavolata set stato=4 where id_tavolata=" + idTavolo);
-                db.Dispose();
-                ReportDocument doc = new ReportDocument();
-                var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
-                doc.Load(reportPath);
-                doc.PrintOptions.PrinterName = "POS-CASSA";
-                doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
-                doc.SetDatabaseLogon("sa", "avellino.081");
-                doc.SetParameterValue(0, idTavolo);
-                doc.SetParameterValue(1, 0);
-                doc.PrintToPrinter(1, false, 0, 0);
-                doc.Close();
-                Print("POS-CASSA", GetDocument());
+                // Costruisci l'URL completo per il metodo StampaContoTavolo del servizio ASMX
+                string url = $"mioserv.asmx/StampaContoTavolo?idTavolo={idTavolo}";
+
+                // Esegui la chiamata HTTP GET (o POST a seconda del metodo del servizio ASMX)
+                HttpResponseMessage response = await _client.GetAsync(url);
+
+                // Controlla se la richiesta ha avuto successo
+                response.EnsureSuccessStatusCode();
+
+                // Leggi la risposta come stringa
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                // Ritorna la risposta come contenuto della richiesta HTTP
+                return Ok(responseBody);
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                log.Scrivi("Qualcosa non ha funzionato con la stampa Conto Tavolo: " + idTavolo + ". Errore: " + ex.Message + "-->" + ex.InnerException, "Admin");
-                RestartIis();
+                // Gestisci le eccezioni di HTTP request
+                return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
             }
-            return Ok();
         }
 
-        [HttpPost("stampaPreContoTavolo")]
-        public IActionResult StampaPreContoTavolo(string idTavolo)
+        /*public IActionResult StampaContoTavolo(string idTavolo)
         {
             logEventi log = new logEventi();
+             try
+             {
+                 db db = new db();
+                 db.getReader("update tavolata set stato=4 where id_tavolata=" + idTavolo);
+                 db.Dispose();
+                 ReportDocument doc = new ReportDocument();
+                 var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
+                 doc.Load(reportPath);
+                 doc.PrintOptions.PrinterName = "POS-CASSA";
+                 doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
+                 doc.SetDatabaseLogon("sa", "avellino.081");
+                 doc.SetParameterValue(0, idTavolo);
+                 doc.SetParameterValue(1, 0);
+                 doc.PrintToPrinter(1, false, 0, 0);
+                 doc.Close();
+                 Print("POS-CASSA", GetDocument());
+             }
+             catch (Exception ex)
+             {
+                 log.Scrivi("Qualcosa non ha funzionato con la stampa Conto Tavolo: " + idTavolo + ". Errore: " + ex.Message + "-->" + ex.InnerException, "Admin");
+                 RestartIis();
+             }
+            return Ok();
+        }*/
+
+        [HttpPost("StampaPreContoTavolo")]
+        public async Task<IActionResult> StampapreContoTavolo(string idTavolo)
+        {
             try
             {
-                db db = new db();
-                db.getReader("update tavolata set stato=5 where id_tavolata=" + idTavolo);
-                db.Dispose();
-                ReportDocument doc = new ReportDocument();
-                var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
-                doc.Load(reportPath);
-                doc.PrintOptions.PrinterName = "POS-CASSA";
-                doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
-                doc.SetDatabaseLogon("sa", "avellino.081");
-                doc.SetParameterValue(0, idTavolo);
-                doc.SetParameterValue(1, 1);
-                doc.PrintToPrinter(1, false, 0, 0);
-                doc.Close();
-                Print("POS-CASSA", GetDocument());
+                // Costruisci l'URL completo per il metodo StampaContoTavolo del servizio ASMX
+                string url = $"mioserv.asmx/StampaPreContoTavolo?idTavolo={idTavolo}";
+
+                // Esegui la chiamata HTTP GET (o POST a seconda del metodo del servizio ASMX)
+                HttpResponseMessage response = await _client.GetAsync(url);
+
+                // Controlla se la richiesta ha avuto successo
+                response.EnsureSuccessStatusCode();
+
+                // Leggi la risposta come stringa
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                // Ritorna la risposta come contenuto della richiesta HTTP
+                return Ok(responseBody);
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                log.Scrivi("Qualcosa non ha funzionato con la stampa PreConto Tavolo: " + idTavolo + ". Errore: " + ex.Message + "-->" + ex.InnerException, "Admin");
-                RestartIis();
+                // Gestisci le eccezioni di HTTP request
+                return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
             }
-            return Ok();
         }
+
+        /* public IActionResult StampaPreContoTavolo(string idTavolo)
+         {
+             logEventi log = new logEventi();
+             try
+             {
+                 db db = new db();
+                 db.getReader("update tavolata set stato=5 where id_tavolata=" + idTavolo);
+                 db.Dispose();
+                 ReportDocument doc = new ReportDocument();
+                 var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
+                 doc.Load(reportPath);
+                 doc.PrintOptions.PrinterName = "POS-CASSA";
+                 doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
+                 doc.SetDatabaseLogon("sa", "avellino.081");
+                 doc.SetParameterValue(0, idTavolo);
+                 doc.SetParameterValue(1, 1);
+                 doc.PrintToPrinter(1, false, 0, 0);
+                 doc.Close();
+                 Print("POS-CASSA", GetDocument());
+             }
+             catch (Exception ex)
+             {
+                 log.Scrivi("Qualcosa non ha funzionato con la stampa PreConto Tavolo: " + idTavolo + ". Errore: " + ex.Message + "-->" + ex.InnerException, "Admin");
+                 RestartIis();
+             }
+             return Ok();
+    }*/
         public static string PrinterName(string NomeStampante)
         {
             return $@"\\{Environment.MachineName}\{NomeStampante}";
