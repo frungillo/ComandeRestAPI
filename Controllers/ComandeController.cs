@@ -491,7 +491,7 @@ namespace ComandeRestAPI.Controllers
         public IActionResult creaTavolata([FromBody] TavolataMini t)
         {
             string ora = "";
-            if (DateTime.Now.Hour >= 10 && DateTime.Now.Hour < 17) ora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 12:00' , 103)";
+            if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 17) ora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 12:00' , 103)";
             else ora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 19:00', 103)";
            
           
