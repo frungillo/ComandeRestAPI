@@ -23,26 +23,19 @@ namespace ComandeRestAPI.Controllers
     [ApiController]
     public class ComandeController : ControllerBase
     {
-       
+
         private readonly HttpClient _client;
-
-        private readonly SqlConnection _conn = new SqlConnection(db.connStr());
-
+        private readonly SqlConnection _conn;
         private readonly IWebHostEnvironment _env;
 
-        public ComandeController(IHttpClientFactory clientFactory)
+        // Single constructor with all dependencies
+        public ComandeController(IHttpClientFactory clientFactory, IWebHostEnvironment env, SqlConnection conn)
         {
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri("https://example.com/path-to-asmx-service/");
-            // Impostazioni aggiuntive per HttpClient, se necessario
-        }
-
-        public ComandeController(IWebHostEnvironment env, SqlConnection conn)
-        {
+            _client.BaseAddress = new Uri("http://localhost:56515/mioserv.asmx");
             _env = env;
-            _conn = conn;
+            _conn = conn ?? new SqlConnection(db.connStr());
         }
-
         [HttpGet("getPietanza")]
         public ActionResult<Pietanza> GetPietanza(string Id_pietanza)
         {
@@ -60,7 +53,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(pie);
         }
-
         [HttpGet("getPietanze")]
         public ActionResult<IEnumerable<Pietanza>> GetPietanze(string descrizione)
         {
@@ -96,14 +88,12 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(names);
         }
-
         [HttpGet("getPietanzeAttive")]
         public ActionResult<IEnumerable<Pietanza>> GetPietanzeAttive()
         {
             
             return Ok(Pietanza.GetPietanzeAttive());
         }
-
         [HttpGet("getMenu")]
         public ActionResult<IEnumerable<Menu>> GetMenu()
         {
@@ -138,7 +128,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(menus);
         }
-
         [HttpGet("getMenuByIdTavolo")]
         public ActionResult<IEnumerable<Menu>> GetMenuByIdTavolo(int id_tavolo)
         {
@@ -184,8 +173,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(namem);
         }
-
-
         [HttpGet("getTavolateByIdOperatore")]
         public ActionResult<IEnumerable<Tavolata>> GetTavolateByIdOperatore(int id_operatore)
         {
@@ -237,7 +224,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(tc);
         }
-
         [HttpPost("setExtra")]
         public IActionResult SetExtra(string id_pietanza, int quantita, float prezzo)
         {
@@ -249,7 +235,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-
         [HttpGet("getIncassoDettaglio")]
         public ActionResult<IEnumerable<IncassoGiorno>> GetIncassoDettaglio(string data)
         {
@@ -310,7 +295,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(incasso);
         }
-
         [HttpGet("getTotaleIncassato")]
         public ActionResult<float> GetTotaleIncassato(string data)
         {
@@ -324,7 +308,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(incasso);
         }
-
         [HttpGet("getDettaglioContoTavolo")]
         public ActionResult<string> GetDettaglioContoTavolo(int idTavolo)
         {
@@ -382,7 +365,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(html);
         }
-
         [HttpGet("getTotaleContoTavolo")]
         public ActionResult<string> GetTotaleContoTavolo(int idtavolo)
         {
@@ -425,15 +407,12 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(string.Format("{0:0.00}", result));
         }
-
-
         [HttpGet("getTavolatabyID")]
         public ActionResult<Tavolata> GetTavolatabyID(int id)
         {
            
             return Ok(new Tavolata(id));
         }
-
         [HttpPost("aggiornaTavolo")]
         public IActionResult AggiornaTavolo([FromBody] Tavolata ta)
         {
@@ -512,7 +491,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-       
         [HttpPost("salvaPrestazioneExtra")]
         public IActionResult SalvaPrestazioneExtra(int IdPrestazione, string prezzo, bool delete)
         {
@@ -530,7 +508,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpGet("getTavoliConto")]
         public ActionResult<string> GetTavoliConto(string ora)
         {
@@ -581,7 +558,6 @@ namespace ComandeRestAPI.Controllers
             html += "</table>";
             return Ok(html);
         }
-
         [HttpGet("getSaleHtml")]
         public ActionResult<string> GetSaleHtml()
         {
@@ -597,7 +573,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(html);
         }
-
         private int CopertiImpegnatiBySala(int idsala)
         {
             db db = new db();
@@ -616,7 +591,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return coperti;
         }
-
         [HttpPost("setPagato")]
         public IActionResult SetPagato(int idtavolo, double importoContanti, double importoPOS)
         {
@@ -642,7 +616,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpGet("creaPopupOperatori")]
         public ActionResult<string> CreaPopupOperatori()
         {
@@ -660,7 +633,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(html);
         }
-
         [HttpPost("setCoperti")]
         public IActionResult SetCoperti(int idTavolo, string coperti)
         {
@@ -674,7 +646,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpPost("setSala")]
         public IActionResult SetSala(int idTavolata, int idSala)
         {
@@ -685,7 +656,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-
         [HttpPost("setOperatore")]
         public IActionResult SetOperatore(int idTavolata, string Operatore)
         {
@@ -696,7 +666,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-
         [HttpPost("demoteTavolo")]
         public IActionResult DemoteTavolo(int idTavolata)
         {
@@ -707,7 +676,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-
         [HttpGet("getCorpoConto")]
         public ActionResult<IEnumerable<CorpoConto>> GetCorpoConto(int idtavolata)
         {
@@ -754,7 +722,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(conto);
         }
-
         [HttpGet("getMenudettaglio")]
         public ActionResult<IEnumerable<Menudettaglio>> GetMenudettaglio(string idmenu)
         {
@@ -792,7 +759,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(namemd);
         }
-
         [HttpGet("getTipiPietanze")]
         public ActionResult<List<TipiPietanze>> GetPulsantiPietanze()
         {
@@ -809,7 +775,6 @@ namespace ComandeRestAPI.Controllers
            
             return Ok(list);
         }
-
         [HttpGet("getPietanzeByTipo")]
         public ActionResult<IEnumerable<Pietanza>> GetPietanzeByTipo(int idTipo)
         {
@@ -824,7 +789,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(lst);
         }
-
         [HttpPost("setOrdine")]
         public ActionResult<string> SetOrdine(int id_tavolata, string id_voce, int quantita, string note_pietanza)
         {
@@ -856,7 +820,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(id_voce.ToString());
         }
-
         [HttpPost("salvaOrdine")]
         public IActionResult SalvaOrdine(int idOrdine, int quantita, bool delete)
         {
@@ -874,7 +837,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         private int CheckStatoTavolo(int idTsavolo)
         {
             int ret = -1;
@@ -888,7 +850,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return ret;
         }
-
         [HttpPost("setTavolata")]
         public IActionResult SetTavolata(string nome, int adulti, int bambini, int id_sala)
         {
@@ -906,7 +867,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpPost("setComande")]
         public IActionResult SetComande([FromBody] List<Comande> comande)
         {
@@ -931,7 +891,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-
         [HttpGet("getPulsantiPerInvioInCucina")]
         public ActionResult<string> GetPulsantiPerInvioInCucina(int idTavolata)
         {
@@ -956,7 +915,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(html);
         }
-
         [HttpPost("setStatoComanda")]
         public IActionResult SetStatoComanda(string htmlButtonItemID, int idTavolata, string Stato, string oldStato)
         {
@@ -1012,7 +970,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok();
         }
-
         private void StampaComande(string idRep, List<Comande> lista, bool isAttesa = false, bool isCorrezione = false)
         {
             logEventi log = new logEventi();
@@ -1063,7 +1020,6 @@ namespace ComandeRestAPI.Controllers
                 RestartIis();
             }
         }
-
         private static void Print(string printerName, byte[] document)
         {
             NativeMethods.DOC_INFO_1 documentInfo;
@@ -1135,7 +1091,7 @@ namespace ComandeRestAPI.Controllers
             try
             {
                 // Costruisci l'URL completo per il metodo StampaContoTavolo del servizio ASMX
-                string url = $"mioserv.asmx/StampaContoTavolo?idTavolo={idTavolo}";
+                string url = _client.BaseAddress + $"/StampaContoTavolo?idTavolo={idTavolo}";
 
                 // Esegui la chiamata HTTP GET (o POST a seconda del metodo del servizio ASMX)
                 HttpResponseMessage response = await _client.GetAsync(url);
@@ -1155,42 +1111,13 @@ namespace ComandeRestAPI.Controllers
                 return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
             }
         }
-
-        /*public IActionResult StampaContoTavolo(string idTavolo)
-        {
-            logEventi log = new logEventi();
-             try
-             {
-                 db db = new db();
-                 db.getReader("update tavolata set stato=4 where id_tavolata=" + idTavolo);
-                 db.Dispose();
-                 ReportDocument doc = new ReportDocument();
-                 var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
-                 doc.Load(reportPath);
-                 doc.PrintOptions.PrinterName = "POS-CASSA";
-                 doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
-                 doc.SetDatabaseLogon("sa", "avellino.081");
-                 doc.SetParameterValue(0, idTavolo);
-                 doc.SetParameterValue(1, 0);
-                 doc.PrintToPrinter(1, false, 0, 0);
-                 doc.Close();
-                 Print("POS-CASSA", GetDocument());
-             }
-             catch (Exception ex)
-             {
-                 log.Scrivi("Qualcosa non ha funzionato con la stampa Conto Tavolo: " + idTavolo + ". Errore: " + ex.Message + "-->" + ex.InnerException, "Admin");
-                 RestartIis();
-             }
-            return Ok();
-        }*/
-
         [HttpPost("StampaPreContoTavolo")]
-        public async Task<IActionResult> StampapreContoTavolo(string idTavolo)
+        public async Task<IActionResult> StampaPreContoTavolo(string idTavolo)
         {
-            try
+              try
             {
                 // Costruisci l'URL completo per il metodo StampaContoTavolo del servizio ASMX
-                string url = $"mioserv.asmx/StampaPreContoTavolo?idTavolo={idTavolo}";
+                string url = _client.BaseAddress + $"/StampaPreContoTavolo?idTavolo={idTavolo}";
 
                 // Esegui la chiamata HTTP GET (o POST a seconda del metodo del servizio ASMX)
                 HttpResponseMessage response = await _client.GetAsync(url);
@@ -1211,38 +1138,10 @@ namespace ComandeRestAPI.Controllers
             }
         }
 
-        /* public IActionResult StampaPreContoTavolo(string idTavolo)
-         {
-             logEventi log = new logEventi();
-             try
-             {
-                 db db = new db();
-                 db.getReader("update tavolata set stato=5 where id_tavolata=" + idTavolo);
-                 db.Dispose();
-                 ReportDocument doc = new ReportDocument();
-                 var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "Preconto.rpt");
-                 doc.Load(reportPath);
-                 doc.PrintOptions.PrinterName = "POS-CASSA";
-                 doc.DataSourceConnections[0].SetConnection(db.DataSource, db.DBName, false);
-                 doc.SetDatabaseLogon("sa", "avellino.081");
-                 doc.SetParameterValue(0, idTavolo);
-                 doc.SetParameterValue(1, 1);
-                 doc.PrintToPrinter(1, false, 0, 0);
-                 doc.Close();
-                 Print("POS-CASSA", GetDocument());
-             }
-             catch (Exception ex)
-             {
-                 log.Scrivi("Qualcosa non ha funzionato con la stampa PreConto Tavolo: " + idTavolo + ". Errore: " + ex.Message + "-->" + ex.InnerException, "Admin");
-                 RestartIis();
-             }
-             return Ok();
-    }*/
         public static string PrinterName(string NomeStampante)
         {
             return $@"\\{Environment.MachineName}\{NomeStampante}";
         }
-
         private void RestartIis()
         {
             Process.Start(new ProcessStartInfo
@@ -1253,7 +1152,6 @@ namespace ComandeRestAPI.Controllers
                 UseShellExecute = false
             }).WaitForExit();
         }
-
 
         [HttpGet("getOperatorebyNomeandById")]
         public ActionResult<Operatori> getOperatorebyNomeandById(string nominativo, string pin)

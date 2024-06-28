@@ -9,7 +9,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configurare CORS
+// Register HttpClient factory
+builder.Services.AddHttpClient();
+
+// Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins",
@@ -21,6 +24,7 @@ builder.Services.AddCors(options =>
         });
 });
 
+// Register SqlConnection as a scoped service
 builder.Services.AddScoped<SqlConnection>(sp =>
 {
     var connectionString = db.connStr();
@@ -38,7 +42,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 
 app.UseHttpsRedirection();
 
-// Usare la politica CORS configurata
+// Use the configured CORS policy
 app.UseCors("AllowAllOrigins");
 
 app.UseAuthorization();
