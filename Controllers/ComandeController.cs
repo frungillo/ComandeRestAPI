@@ -916,109 +916,34 @@ namespace ComandeRestAPI.Controllers
             return Ok(html);
         }
         [HttpPost("setStatoComanda")]
-        public IActionResult SetStatoComanda(string htmlButtonItemID, int idTavolata, string Stato, string oldStato)
+        public async Task<IActionResult> SetStatoComandaAsync(string htmlButtonItemID, int idTavolata, string Stato, string oldStato)
         {
-            db db = new db();
-            string sql = "";
-            if (htmlButtonItemID.StartsWith("btn_t"))
-            {
-                string idTipoPietanzaDaVariare = htmlButtonItemID.Replace("btn_t_", "");
-                sql = $@"
-                    update comande set stato = '{Stato}'
-                    where id_pietanza in (select id_pietanza from pietanze where pietanze.id_tipo = {idTipoPietanzaDaVariare})
-                        and id_tavolata = {idTavolata} and stato = '{oldStato}'";
-                db.getReader(sql);
-            }
-            else if (htmlButtonItemID.StartsWith("btn_c"))
-            {
-                string idComanda = htmlButtonItemID.Replace("btn_c_", "");
-                sql = $@"
-                    update comande set stato = '{Stato}'
-                    where id_comanda = {idComanda}
-                        and id_tavolata = {idTavolata} and stato = '{oldStato}'";
-                db.getReader(sql);
-            }
-            else if (htmlButtonItemID.StartsWith("btn_elim"))
-            {
-                string idComanda = htmlButtonItemID.Replace("btn_elim_", "");
-                sql = $@"
-                    update comande set stato = 'annullato'
-                    where id_comanda = {idComanda}
-                        and id_tavolata = {idTavolata}";
-                db.getReader(sql);
-            }
-            else if (htmlButtonItemID.StartsWith("btn_r"))
-            {
-                string idComanda = htmlButtonItemID.Replace("btn_r_", "");
-                sql = $@"
-                    update comande set stato = 'ristampa'
-                    where id_comanda = {idComanda}
-                        and id_tavolata = {idTavolata} and stato = '{oldStato}'";
-                db.getReader(sql);
-                Stato = "ristampa";
-            }
-            db.Dispose();
-            if (Stato == "inviato" || Stato == "ristampa")
-            {
-                Dictionary<string, List<Comande>> lst = Comande.getComandeByStatoPerRep(Stato, idTavolata);
-                foreach (var rep in lst.Keys)
-                {
-                    List<Comande> comandeRep;
-                    lst.TryGetValue(rep, out comandeRep);
-                    StampaComande(rep, comandeRep);
-                }
-            }
-            return Ok();
-        }
-        private void StampaComande(string idRep, List<Comande> lista, bool isAttesa = false, bool isCorrezione = false)
-        {
-            logEventi log = new logEventi();
-            log.Scrivi("Inizio Stampa comanda per tavolata: " + lista[0].IdTavolata + " la lista contiene " + lista.Count + " elementi", lista[0].Operatore);
-            foreach (Comande item in lista)
-            {
-                if (item.Stato == "ristampa")
-                {
-                    log.Scrivi($"Richiesta RISTAMPA per la comanda {item.IdComande} tavolata {item.IdTavolata}");
-                }
-                db db = new db();
-                string sql = $@"
-                    update comande set stato = 'stampata', ora_stampa=convert(datetime,'{DateTime.Now.ToShortDateString() + " " + DateTime.Now.ToShortTimeString()}',103)
-                    where id_pietanza = '{item.IdPietanza}'
-                        and id_tavolata = {item.IdTavolata} and stato = '{item.Stato}'";
-                db.getReader(sql);
-                db.CloseReader();
-                log.Scrivi("Stato comanda variato per comanda: " + item.IdComande, lista[0].Operatore);
-                if (item.Stato != "ristampa")
-                {
-                    sql = $@"
-                        with T1 as (select quantita as q, id_ingrediente as i from ricette where id_pietanza='{item.IdPietanza}')
-                        update ingredienti 
-                        set giacenza=giacenza-(select q from T1)
-                        where id_ingrediente=(select i from T1)";
-                    db.getReader(sql);
-                }
-                db.Dispose();
-            }
-            try
-            {
-                Reparti rep = new Reparti(idRep);
-                log.Scrivi("Invio alla Stampante " + rep.nomestampante + "  comanda per tavolata: " + lista[0].IdTavolata, lista[0].Operatore);
-                ReportDocument doc = new ReportDocument();
-                var reportPath = System.IO.Path.Combine(_env.ContentRootPath, "StampaOrdini.rpt");
-                doc.Load(reportPath);
-                doc.SetDataSource(lista.ToArray());
-                doc.SetParameterValue(0, rep.descrizione);
-                doc.SetParameterValue(1, isAttesa);
-                doc.SetParameterValue(2, isCorrezione);
-                doc.PrintOptions.PrinterName = rep.nomestampante;
-                doc.PrintToPrinter(1, false, 0, 0);
-                Print(rep.nomestampante, GetDocument());
-            }
-            catch (Exception ex)
-            {
-                log.Scrivi("Qualcosa non ha funzionato con la stampa comanda per tavolata: " + lista[0].IdTavolata + ". Errore: " + ex.Message + "-->" + ex.InnerException, lista[0].Operatore);
-                RestartIis();
-            }
+           // la stringa htmlButton distingue in qualche modo il TIPO PIETANZA
+           // ad esempio se è "btn_t_9" si tratta di pietanza di tipo PIZZA
+          
+
+          try
+          {
+                    // Construct the URL with the required parameters
+                    string url = _client.BaseAddress + $"/setStatoComanda?htmlButtonItemID={htmlButtonItemID}&idTavolata={idTavolata}&Stato={Stato}&oldStato={oldStato}";
+
+                    // Execute the HTTP GET request
+                    HttpResponseMessage response = await _client.GetAsync(url);
+
+                    // Check if the request was successful
+                    response.EnsureSuccessStatusCode();
+
+                    // Read the response as a string
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    // Return the response as the content of the HTTP request
+                    return Ok(responseBody);
+          }
+          catch (HttpRequestException ex)
+          {
+                    // Handle HTTP request exceptions
+                    return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
+          }
         }
         private static void Print(string printerName, byte[] document)
         {
@@ -1061,7 +986,6 @@ namespace ComandeRestAPI.Controllers
                 throw new Win32Exception();
             }
         }
-
         private byte[] GetDocument()
         {
             using (var ms = new MemoryStream())
@@ -1076,7 +1000,6 @@ namespace ComandeRestAPI.Controllers
                 return ms.ToArray();
             }
         }
-
         [HttpPost("stampaOrdine")]
         public IActionResult StampaOrdine(string idRep, List<Comande> lista)
         {
@@ -1084,7 +1007,7 @@ namespace ComandeRestAPI.Controllers
             Print(PrinterName(rep.nomestampante), GetDocument());
             return Ok();
         }
-               
+             
         [HttpGet("StampaContoTavolo")]
         public async Task<IActionResult> StampaContoTavolo(string idTavolo)
         {
