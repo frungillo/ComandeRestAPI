@@ -452,6 +452,63 @@ namespace ComandeRestAPI.Classi
         
          */
     }
+
+
+
+
+    [Serializable]
+    public class Comanda
+    {
+        public int Id_comanda { get; set; }
+        public string Stato { get; set; }
+        public int Id_tavolata { get; set; }
+        public string Id_pietanza { get; set; }
+        public int Quantita { get; set; }
+        public string Variazioni { get; set; }
+        public DateTime? Ora_comanda { get; set; }
+        public DateTime? Ora_stampa { get; set; }
+        private Pietanza? Pietanza { get; set; }
+
+        public Comanda(int id_comanda)
+        {
+            Id_comanda = id_comanda;
+            CaricaDatiDaDatabase();
+        }
+
+        private void CaricaDatiDaDatabase()
+        {
+            db db = new db();
+            string query = $"SELECT * FROM comande WHERE id_comanda = {Id_comanda}}";
+
+            
+            try
+            {
+
+                SqlDataReader reader = db.getReader(query);
+
+                if (reader.Read())
+                {
+                    Stato = reader["stato"].ToString();
+                    Id_tavolata = (int)reader["id_tavolata"];
+                    Id_pietanza = reader["id_pietanza"].ToString();
+                    Quantita = (int)reader["quantita"];
+                    Variazioni = reader["variazioni"].ToString();
+                    Ora_comanda = reader["ora_comanda"] as DateTime?;
+                    Ora_stampa = reader["ora_stampa"] as DateTime?;
+                    Pietanza = new Pietanza(Id_pietanza);
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Errore durante il caricamento dei dati: " + ex.Message);
+            }
+            
+        }
+    }
+
+
+
     [Serializable]
     public struct StatoComande
     {
@@ -549,17 +606,28 @@ namespace ComandeRestAPI.Classi
         public float GranTotale { get => _granTotale; set => _granTotale = value; }
     }
     [Serializable]
-    public struct ordine
+    public class ordine
     {
-        private string _id_tavolata;
+        private int _id_ordine;
+        private int _id_tavolata;
         private string _id_voce;
         private int _quantita;
         private string _note_pietanza;
+        private string _stato;
+        private Object? _voce;
+        private Comanda? _comanda;
+        
 
-        public string Id_tavolata { get => _id_tavolata; set => _id_tavolata = value; }
+        public int Id_tavolata { get => _id_tavolata; set => _id_tavolata = value; }
         public string Id_voce { get => _id_voce; set => _id_voce = value; }
         public int Quantita { get => _quantita; set => _quantita = value; }
         public string Note_pietanza { get => _note_pietanza; set => _note_pietanza = value; }
+        public int Id_ordine { get => _id_ordine; set => _id_ordine = value; }
+        public string Stato { get => _stato; set => _stato = value; }
+        public Object? Voce { get => _voce; set => _voce = value; }
+        public Comanda? Comanda { get => _comanda; set => _comanda = value; }
+
+        public ordine() { }
     }
     /*
      * CREO CLASSI DI SERVIZIO PER LA CLASSE PIETANZA
@@ -670,7 +738,7 @@ namespace ComandeRestAPI.Classi
 
     }
     [Serializable]
-    public struct Menu
+    public class Menu
     {
         private string _id_menu;
         private string _descrizione;
@@ -678,7 +746,7 @@ namespace ComandeRestAPI.Classi
         private float _prezzo;
         private string _occasione;
         private bool _stato;
-        private int _quantita;
+        //private int _quantita;
 
         public string Id_menu { get => _id_menu; set => _id_menu = value; }
         public string Descrizione { get => _descrizione; set => _descrizione = value; }
@@ -686,7 +754,43 @@ namespace ComandeRestAPI.Classi
         public float Prezzo { get => _prezzo; set => _prezzo = value; }
         public string Occasione { get => _occasione; set => _occasione = value; }
         public bool Stato { get => _stato; set => _stato = value; }
-        public int QuantitaOrdinata { get => _quantita; set => _quantita = value; }
+        //public int QuantitaOrdinata { get => _quantita; set => _quantita = value; }
+
+        public Menu() { }
+        public Menu(string id_menu)
+        {
+            _id_menu = id_menu;
+            CaricaDatiDaDatabase();
+        }
+
+        private void CaricaDatiDaDatabase()
+        {
+            db db = new db();
+            string query = $"SELECT Descrizione, Tipo, Prezzo, Occasione, Stato FROM Menu WHERE Id_menu ='{Id_menu}'" ;
+
+          
+            
+            try
+            {
+                
+                SqlDataReader reader = db.getReader(query);
+
+                if (reader.Read())
+                {
+                    _descrizione = reader["Descrizione"].ToString();
+                    _tipo = reader["Tipo"].ToString();
+                    _prezzo = float.Parse(reader["Prezzo"].ToString());
+                    _occasione = reader["Occasione"].ToString();
+                    _stato = bool.Parse(reader["Stato"].ToString());
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Errore durante il caricamento dei dati: " + ex.Message);
+            }
+            
+        }
     }
    
     [Serializable]
