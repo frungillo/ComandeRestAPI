@@ -551,15 +551,17 @@ namespace ComandeRestAPI.Classi
     [Serializable]
     public struct ordine
     {
-        private string _id_tavolata;
+        private int _id_ordine;
+        private int _id_tavolata;
         private string _id_voce;
         private int _quantita;
         private string _note_pietanza;
 
-        public string Id_tavolata { get => _id_tavolata; set => _id_tavolata = value; }
+        public int Id_tavolata { get => _id_tavolata; set => _id_tavolata = value; }
         public string Id_voce { get => _id_voce; set => _id_voce = value; }
         public int Quantita { get => _quantita; set => _quantita = value; }
         public string Note_pietanza { get => _note_pietanza; set => _note_pietanza = value; }
+        public int Id_ordine { get => _id_ordine; set => _id_ordine = value; }
     }
     /*
      * CREO CLASSI DI SERVIZIO PER LA CLASSE PIETANZA

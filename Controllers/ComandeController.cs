@@ -789,17 +789,58 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(lst);
         }
-        [HttpPost("setOrdine")]
-        public ActionResult<string> SetOrdine(int id_tavolata, string id_voce, int quantita, string note_pietanza)
+
+        [HttpGet("getOrdini")]
+        public ActionResult<ordine[]> getOrdiniByTavolata(int idTavolata)
         {
-            int statotavolo = CheckStatoTavolo(id_tavolata);
-            db dbc = new db();
-            string sqlordini = $"insert into ordini (id_tavolata, id_pietanza, quantita, note_pietanza) values ({id_tavolata}, '{id_voce}', {quantita}, '{note_pietanza}')";
-            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
-            if (id_voce.StartsWith("M"))
+            List<ordine> ret = new List<ordine>();
+            string sql = "select * from ordini where id_tavolata=" + idTavolata;
+            db db = new db();
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
             {
-                sqlordini = $"insert into ordini (id_tavolata, id_menu, quantita, note_pietanza) values ({id_tavolata}, '{id_voce}', {quantita}, '{note_pietanza}')";
-                SqlDataReader r1 = dbc.getReader($"select id_ordine from ordini where id_tavolata={id_tavolata} and id_menu='{id_voce}'");
+                ordine p = new ordine();
+                p.Id_ordine = (int)r[0];
+                p.Id_tavolata = (int)r[1];
+                if (r[2] == null) { p.Id_voce = r[5].ToString(); } else { p.Id_voce = r[2].ToString(); }
+                p.Note_pietanza = r[3].ToString();
+                p.Quantita = (int)r[4];
+                ret.Add(p);
+
+            }
+            db.Dispose();
+            return Ok(ret);
+
+
+
+        }
+
+        [HttpPost("deleteOrdine")]
+        public ActionResult<bool>deleteOrdine(int idOrdine)
+        {
+            string sql = "delete ordini where id_ordine=" + idOrdine;
+            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
+            SqlCommand comm = new SqlCommand(sql, _conn);
+            comm.ExecuteNonQuery();
+            _conn.Close();
+            return Ok(true);
+        }
+
+        [HttpPost("setOrdine")]
+        public ActionResult<int> SetOrdine([FromBody] ordine ordine)
+        {
+            int id_ordine = -1;
+            //int statotavolo = CheckStatoTavolo(id_tavolata);
+            //db dbc = new db();
+            string sqlordini = $"insert into ordini (id_tavolata, id_pietanza, quantita, note_pietanza) " +
+                $"values ({ordine.Id_tavolata}, '{ordine.Id_voce}', {ordine.Quantita}, '{ordine.Note_pietanza}');SELECT SCOPE_IDENTITY();";
+            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
+            if (ordine.Id_voce.StartsWith("M"))
+            {
+                sqlordini = $"insert into ordini (id_tavolata, id_menu, quantita, note_pietanza) " +
+                    $"values ({ordine.Id_tavolata}, '{ordine.Id_voce}', {ordine.Quantita}, '{ordine.Note_pietanza}');SELECT SCOPE_IDENTITY();";
+                /*
+                SqlDataReader r1 = dbc.getReader($"select id_ordine from ordini where id_tavolata={ordine.Id_tavolata} and id_menu='{ordine.Id_voce}'");
                 int id_ordine = -1;
                 if (r1.HasRows)
                 {
@@ -809,17 +850,24 @@ namespace ComandeRestAPI.Controllers
                 }
                 if (id_ordine > -1)
                 {
-                    sqlordini = $"update ordini set quantita={quantita} where id_ordine={id_ordine}";
+                    sqlordini = $"update ordini set quantita={ordine.Quantita} where id_ordine={id_ordine}";
                 }
+                */
             }
             SqlCommand comm = new SqlCommand(sqlordini, _conn);
-            comm.ExecuteNonQuery();
+            object ret = comm.ExecuteScalar();
+            if (ret != null)
+            {
+                id_ordine = Convert.ToInt32( ret);
+            } 
             _conn.Close();
             db db = new db();
-            db.getReader($"update tavolata set stato ='2' where id_tavolata ={id_tavolata} ");
+            db.getReader($"update tavolata set stato ='2' where id_tavolata ={ordine.Id_tavolata} "); //imposto il tavolo in servizio, se non lo è già
             db.Dispose();
-            return Ok(id_voce.ToString());
+            return Ok(id_ordine);
         }
+
+
         [HttpPost("salvaOrdine")]
         public IActionResult SalvaOrdine(int idOrdine, int quantita, bool delete)
         {
@@ -884,7 +932,8 @@ namespace ComandeRestAPI.Controllers
                 comm.ExecuteNonQuery();
                 if (item.IsExtra == 1)
                 {
-                    SetOrdine(item.IdTavolata, item.IdPietanza, item.Quantita, VariazioneAllaPietanza);
+                    ordine ordine = new ordine(){ Id_tavolata=item.IdTavolata, Id_voce= item.IdPietanza, Quantita = item.Quantita, Note_pietanza = item.Variazioni  };
+                    SetOrdine(ordine);
                 }
                 GC.Collect();
             }
