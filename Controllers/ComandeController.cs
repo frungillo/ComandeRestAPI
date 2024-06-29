@@ -157,7 +157,7 @@ namespace ComandeRestAPI.Controllers
                         Tipo = myReader[2].ToString(),
                         Occasione = myReader[4].ToString(),
                         Stato = bool.Parse(myReader[5].ToString()),
-                        QuantitaOrdinata = myReader.GetInt32(6)
+                       // QuantitaOrdinata = myReader.GetInt32(6)
                     };
                     namem.Add(m);
                 }
@@ -802,9 +802,10 @@ namespace ComandeRestAPI.Controllers
                 ordine p = new ordine();
                 p.Id_ordine = (int)r[0];
                 p.Id_tavolata = (int)r[1];
-                if (r[2] == null) { p.Id_voce = r[5].ToString(); } else { p.Id_voce = r[2].ToString(); }
+                if (r[2] == null) { p.Id_voce = r[5].ToString(); p.Voce = new Menu(p.Id_voce);   } else { p.Id_voce = r[2].ToString(); p.Voce = new Pietanza(p.Id_voce); }
                 p.Note_pietanza = r[3].ToString();
                 p.Quantita = (int)r[4];
+                if(r[6] != null) p.Comanda = new Comanda(Convert.ToInt32(r[6]));
                 ret.Add(p);
 
             }
@@ -832,8 +833,8 @@ namespace ComandeRestAPI.Controllers
             int id_ordine = -1;
             //int statotavolo = CheckStatoTavolo(id_tavolata);
             //db dbc = new db();
-            string sqlordini = $"insert into ordini (id_tavolata, id_pietanza, quantita, note_pietanza) " +
-                $"values ({ordine.Id_tavolata}, '{ordine.Id_voce}', {ordine.Quantita}, '{ordine.Note_pietanza}');SELECT SCOPE_IDENTITY();";
+            string sqlordini = $"insert into ordini (id_tavolata, id_pietanza, quantita, note_pietanza, stato) " +
+                $"values ({ordine.Id_tavolata}, '{ordine.Id_voce}', {ordine.Quantita}, '{ordine.Note_pietanza}', '{ordine.Stato}');SELECT SCOPE_IDENTITY();";
             if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
             if (ordine.Id_voce.StartsWith("M"))
             {
