@@ -478,7 +478,7 @@ namespace ComandeRestAPI.Classi
         private void CaricaDatiDaDatabase()
         {
             db db = new db();
-            string query = $"SELECT * FROM comande WHERE id_comanda = {Id_comanda}}";
+            string query = $"SELECT * FROM comande WHERE id_comanda = {Id_comanda}";
 
             
             try
