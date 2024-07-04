@@ -805,19 +805,23 @@ namespace ComandeRestAPI.Controllers
                 if (r[2] == null) { p.Id_voce = r[5].ToString(); p.Voce = new Menu(p.Id_voce);   } else { p.Id_voce = r[2].ToString(); p.Voce = new Pietanza(p.Id_voce); }
                 p.Note_pietanza = r[3].ToString();
                 p.Quantita = (int)r[4];
-                if(r[6] != null) p.Comanda = new Comanda(Convert.ToInt32(r[6]));
+                if(r[6] != null && IsNumeric(r[6].ToString())) p.Comanda = new Comanda(Convert.ToInt32(r[6]));
                 ret.Add(p);
 
             }
             db.Dispose();
             return Ok(ret);
-
-
-
         }
 
-        [HttpPost("deleteOrdine")]
-        public ActionResult<bool>deleteOrdine(int idOrdine)
+        private bool IsNumeric(string input)
+        {
+            return double.TryParse(input, out _);
+        }
+
+
+
+        [HttpDelete("deleteOrdine/{idOrdine}")]
+        public ActionResult<bool> deleteOrdine(int idOrdine)
         {
             string sql = "delete ordini where id_ordine=" + idOrdine;
             if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
@@ -867,9 +871,31 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(id_ordine);
         }
+        [HttpPost("updateOrdine")]
+        public ActionResult<int> UpdateOrdine([FromBody] ordine ordine)
+        {
+            
+            string sqlordini = $"update ordini set quantita = {ordine.Quantita}," +
+                $" note_pietanza = '{ordine.Note_pietanza.Replace("'","''")}', " +
+                $" stato= '{ordine.Stato}' " +
+                $" where  id_ordine={ordine.Id_ordine}";
+            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
+            
+            SqlCommand comm = new SqlCommand(sqlordini, _conn);
+            int ret = comm.ExecuteNonQuery();
+            
+            _conn.Close();
+            return Ok(ret);
+        }
 
-
-        [HttpPost("salvaOrdine")]
+        /// <summary>
+        /// [Vecchio] aggiorna i dati dell'ordine
+        /// </summary>
+        /// <param name="idOrdine"></param>
+        /// <param name="quantita"></param>
+        /// <param name="delete"></param>
+        /// <returns></returns>
+        [HttpPost("salvaOrdine"), Obsolete]
         public IActionResult SalvaOrdine(int idOrdine, int quantita, bool delete)
         {
             string sql;
@@ -916,7 +942,46 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-        [HttpPost("setComande")]
+
+        [HttpPost("setComanda")]
+        public ActionResult<int> SetComanda([FromBody] Comanda comanda)
+        {
+            string VariazioneAllaPietanza = "";
+            //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
+            VariazioneAllaPietanza = comanda.Variazioni.Replace("'", "''").Trim();
+            
+            string sqlcomande = $"insert into comande (id_tavolata, id_pietanza, quantita, variazioni, ora_comanda, stato) values ({comanda.Id_tavolata}, " +
+                $"'{comanda.Id_pietanza}', {comanda.Quantita}, '{VariazioneAllaPietanza}', SYSDATETIME(), '{comanda.Stato}');;SELECT SCOPE_IDENTITY();";
+            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
+            SqlCommand comm = new SqlCommand(sqlcomande, _conn);
+            int idComanda= Convert.ToInt32( comm.ExecuteScalar());
+            GC.Collect();
+            _conn.Close();
+            return Ok(idComanda);
+        }
+
+        [HttpPost("updateComanda")]
+        public ActionResult<bool> UpdateComanda([FromBody] Comanda comanda)
+        {
+            string VariazioneAllaPietanza = "";
+            string sql_ora_stampa = comanda.Stato == "stampata" ? "ora_stampa=sysdatetime() " : " ";
+            //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
+            VariazioneAllaPietanza = comanda.Variazioni.Replace("'", "''").Trim();
+
+            string sqlcomande = $"update comande set quantita={comanda.Quantita}, " +
+                $"variazioni='{VariazioneAllaPietanza}', " +
+                $"stato = '{comanda.Stato}') values ({comanda.Id_tavolata}, " +
+                sql_ora_stampa + 
+                $"where id_comanda = {comanda.Id_comanda}";
+            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
+            SqlCommand comm = new SqlCommand(sqlcomande, _conn);
+            bool result = Convert.ToBoolean(comm.ExecuteNonQuery());
+            GC.Collect();
+            _conn.Close();
+            return Ok(result);
+        }
+
+        [HttpPost("setComande"), Obsolete]
         public IActionResult SetComande([FromBody] List<Comande> comande)
         {
             foreach (Comande item in comande)
@@ -941,6 +1006,7 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
+
         [HttpGet("getPulsantiPerInvioInCucina")]
         public ActionResult<string> GetPulsantiPerInvioInCucina(int idTavolata)
         {
