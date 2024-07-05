@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ComandeRestAPI.Classi
 {
@@ -465,9 +466,12 @@ namespace ComandeRestAPI.Classi
         public string Id_pietanza { get; set; }
         public int Quantita { get; set; }
         public string Variazioni { get; set; }
+        [AllowNull]
         public DateTime? Ora_comanda { get; set; }
+        [AllowNull]
         public DateTime? Ora_stampa { get; set; }
-        private Pietanza? Pietanza { get; set; }
+        [AllowNull]
+        public Pietanza? Pietanza { get; set; }
 
         public Comanda(int id_comanda)
         {

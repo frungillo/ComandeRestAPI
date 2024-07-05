@@ -129,7 +129,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(menus);
         }
        
-        [HttpGet("getMenuByIdTavolo")]
+        [HttpGet("getMenuByIdTavolo"), Obsolete]
         public ActionResult<IEnumerable<Menu>> GetMenuByIdTavolo(int id_tavolo)
         {
             var namem = new List<Menu>();
@@ -175,7 +175,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(namem);
         }
         
-        [HttpGet("getTavolateByIdOperatore")]
+        [HttpGet("getTavolateByIdOperatore"), Obsolete]
         public ActionResult<IEnumerable<Tavolata>> GetTavolateByIdOperatore(int id_operatore)
         {
             List<Tavolata> list = new List<Tavolata>();
@@ -227,7 +227,7 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(tc);
         }
-        [HttpPost("setExtra")]
+        [HttpPost("setExtra"), Obsolete]
         public IActionResult SetExtra(string id_pietanza, int quantita, float prezzo)
         {
             string sqlextra = $@"insert into extra (data, id_pietanza, prezzo, quantita) 
@@ -494,7 +494,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-        [HttpPost("salvaPrestazioneExtra")]
+        [HttpPost("salvaPrestazioneExtra"), Obsolete]
         public IActionResult SalvaPrestazioneExtra(int IdPrestazione, string prezzo, bool delete)
         {
             string sql;
@@ -561,7 +561,7 @@ namespace ComandeRestAPI.Controllers
             html += "</table>";
             return Ok(html);
         }
-        [HttpGet("getSaleHtml")]
+        [HttpGet("getSaleHtml"), Obsolete]
         public ActionResult<string> GetSaleHtml()
         {
             db db = new db();
@@ -594,7 +594,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return coperti;
         }
-        [HttpPost("setPagato")]
+        [HttpPost("setPagato"), Obsolete]
         public IActionResult SetPagato(int idtavolo, double importoContanti, double importoPOS)
         {
             db db = new db();
@@ -619,7 +619,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-        [HttpGet("creaPopupOperatori")]
+        [HttpGet("creaPopupOperatori"), Obsolete]
         public ActionResult<string> CreaPopupOperatori()
         {
             string html = $@"
