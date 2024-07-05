@@ -128,6 +128,7 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(menus);
         }
+       
         [HttpGet("getMenuByIdTavolo")]
         public ActionResult<IEnumerable<Menu>> GetMenuByIdTavolo(int id_tavolo)
         {
@@ -173,6 +174,7 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(namem);
         }
+        
         [HttpGet("getTavolateByIdOperatore")]
         public ActionResult<IEnumerable<Tavolata>> GetTavolateByIdOperatore(int id_operatore)
         {
@@ -187,6 +189,7 @@ namespace ComandeRestAPI.Controllers
             list = Tavolata.GetTavolateOdierne();
             return Ok(list);
         }
+        
         [HttpGet("getTestataConto")]
         public ActionResult<TestaConto> GetTestataConto(int idtavolata)
         {
@@ -979,6 +982,17 @@ namespace ComandeRestAPI.Controllers
             GC.Collect();
             _conn.Close();
             return Ok(result);
+        }
+
+        [HttpDelete("deleteComanda/{idComanda}")]
+        public ActionResult<bool> deleteComanda(int idComanda)
+        {
+            string sql = "delete comande where id_comanda=" + idComanda;
+            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
+            SqlCommand comm = new SqlCommand(sql, _conn);
+            comm.ExecuteNonQuery();
+            _conn.Close();
+            return Ok(true);
         }
 
         [HttpPost("setComande"), Obsolete]
