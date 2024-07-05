@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
 
@@ -463,9 +464,11 @@ namespace ComandeRestAPI.Classi
         public int Id_comanda { get; set; }
         public string Stato { get; set; }
         public int Id_tavolata { get; set; }
+        [Required(AllowEmptyStrings = true)]
         public string Id_pietanza { get; set; }
         public int Quantita { get; set; }
-        public string Variazioni { get; set; }
+        [AllowNull]
+        public string? Variazioni { get; set; }
         [AllowNull]
         public DateTime? Ora_comanda { get; set; }
         [AllowNull]
@@ -610,7 +613,7 @@ namespace ComandeRestAPI.Classi
         public float GranTotale { get => _granTotale; set => _granTotale = value; }
     }
     [Serializable]
-    public class ordine
+    public class Ordine
     {
         private int _id_ordine;
         private int _id_tavolata;
@@ -631,7 +634,7 @@ namespace ComandeRestAPI.Classi
         public Object? Voce { get => _voce; set => _voce = value; }
         public Comanda? Comanda { get => _comanda; set => _comanda = value; }
 
-        public ordine() { }
+        public Ordine() { }
     }
     /*
      * CREO CLASSI DI SERVIZIO PER LA CLASSE PIETANZA

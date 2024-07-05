@@ -794,15 +794,15 @@ namespace ComandeRestAPI.Controllers
         }
 
         [HttpGet("getOrdini")]
-        public ActionResult<ordine[]> getOrdiniByTavolata(int idTavolata)
+        public ActionResult<Ordine[]> getOrdiniByTavolata(int idTavolata)
         {
-            List<ordine> ret = new List<ordine>();
+            List<Ordine> ret = new List<Ordine>();
             string sql = "select * from ordini where id_tavolata=" + idTavolata;
             db db = new db();
             SqlDataReader r = db.getReader(sql);
             while (r.Read())
             {
-                ordine p = new ordine();
+                Ordine p = new Ordine();
                 p.Id_ordine = (int)r[0];
                 p.Id_tavolata = (int)r[1];
                 if (r[2] == null) { p.Id_voce = r[5].ToString(); p.Voce = new Menu(p.Id_voce);   } else { p.Id_voce = r[2].ToString(); p.Voce = new Pietanza(p.Id_voce); }
@@ -835,7 +835,7 @@ namespace ComandeRestAPI.Controllers
         }
 
         [HttpPost("setOrdine")]
-        public ActionResult<int> SetOrdine([FromBody] ordine ordine)
+        public ActionResult<int> SetOrdine([FromBody] Ordine ordine)
         {
             int id_ordine = -1;
             //int statotavolo = CheckStatoTavolo(id_tavolata);
@@ -875,7 +875,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(id_ordine);
         }
         [HttpPost("updateOrdine")]
-        public ActionResult<int> UpdateOrdine([FromBody] ordine ordine)
+        public ActionResult<int> UpdateOrdine([FromBody] Ordine ordine)
         {
             
             string sqlordini = $"update ordini set quantita = {ordine.Quantita}," +
@@ -951,7 +951,7 @@ namespace ComandeRestAPI.Controllers
         {
             string VariazioneAllaPietanza = "";
             //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
-            VariazioneAllaPietanza = comanda.Variazioni.Replace("'", "''").Trim();
+            VariazioneAllaPietanza = comanda.Variazioni?.Replace("'", "''").Trim();
             
             string sqlcomande = $"insert into comande (id_tavolata, id_pietanza, quantita, variazioni, ora_comanda, stato) values ({comanda.Id_tavolata}, " +
                 $"'{comanda.Id_pietanza}', {comanda.Quantita}, '{VariazioneAllaPietanza}', SYSDATETIME(), '{comanda.Stato}');;SELECT SCOPE_IDENTITY();";
@@ -973,7 +973,7 @@ namespace ComandeRestAPI.Controllers
 
             string sqlcomande = $"update comande set quantita={comanda.Quantita}, " +
                 $"variazioni='{VariazioneAllaPietanza}', " +
-                $"stato = '{comanda.Stato}') values ({comanda.Id_tavolata}, " +
+                $"stato = '{comanda.Stato}' " +
                 sql_ora_stampa + 
                 $"where id_comanda = {comanda.Id_comanda}";
             if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
@@ -1012,7 +1012,7 @@ namespace ComandeRestAPI.Controllers
                 comm.ExecuteNonQuery();
                 if (item.IsExtra == 1)
                 {
-                    ordine ordine = new ordine(){ Id_tavolata=item.IdTavolata, Id_voce= item.IdPietanza, Quantita = item.Quantita, Note_pietanza = item.Variazioni  };
+                    Ordine ordine = new Ordine(){ Id_tavolata=item.IdTavolata, Id_voce= item.IdPietanza, Quantita = item.Quantita, Note_pietanza = item.Variazioni  };
                     SetOrdine(ordine);
                 }
                 GC.Collect();
