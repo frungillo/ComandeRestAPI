@@ -808,7 +808,7 @@ namespace ComandeRestAPI.Controllers
                 Ordine p = new Ordine();
                 p.Id_ordine = (int)r[0];
                 p.Id_tavolata = (int)r[1];
-                if (r[2] == null) { p.Id_voce = r[5].ToString(); p.Voce = new Menu(p.Id_voce);   } else { p.Id_voce = r[2].ToString(); p.Voce = new Pietanza(p.Id_voce); }
+                if (string.IsNullOrEmpty(r[2].ToString())) { p.Id_voce = r[5].ToString(); p.Voce = new Menu(p.Id_voce);   } else { p.Id_voce = r[2].ToString(); p.Voce = new Pietanza(p.Id_voce); }
                 p.Note_pietanza = r[3].ToString();
                 p.Quantita = (int)r[4];
                 if(r[6] != null && IsNumeric(r[6].ToString())) p.Comanda = new Comanda(Convert.ToInt32(r[6]));
@@ -970,11 +970,11 @@ namespace ComandeRestAPI.Controllers
         public ActionResult<int> SetComanda([FromBody] Comanda comanda)
         {
             string VariazioneAllaPietanza = "";
-            //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
             VariazioneAllaPietanza = comanda.Variazioni?.Replace("'", "''").Trim();
-            
+
+            string SqlIdOrd = comanda.id_ordine == null ? "null" : comanda.id_ordine.ToString();
             string sqlcomande = $"insert into comande (id_tavolata, id_pietanza, quantita, variazioni, ora_comanda, stato, id_ordine) values ({comanda.Id_tavolata}, " +
-                $"'{comanda.Id_pietanza}', {comanda.Quantita}, '{VariazioneAllaPietanza}', SYSDATETIME(), '{comanda.Stato}', {comanda.id_ordine});SELECT SCOPE_IDENTITY();";
+                $"'{comanda.Id_pietanza}', {comanda.Quantita}, '{VariazioneAllaPietanza}', SYSDATETIME(), '{comanda.Stato}', {SqlIdOrd});SELECT SCOPE_IDENTITY();";
             if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
             SqlCommand comm = new SqlCommand(sqlcomande, _conn);
             int idComanda= Convert.ToInt32( comm.ExecuteScalar());
