@@ -475,6 +475,8 @@ namespace ComandeRestAPI.Classi
         public DateTime? Ora_stampa { get; set; }
         [AllowNull]
         public Pietanza? Pietanza { get; set; }
+        [AllowNull]
+        public int? id_ordine { get; set; }
 
         public Comanda(int id_comanda)
         {
@@ -503,6 +505,7 @@ namespace ComandeRestAPI.Classi
                     Ora_comanda = reader["ora_comanda"] as DateTime?;
                     Ora_stampa = reader["ora_stampa"] as DateTime?;
                     Pietanza = new Pietanza(Id_pietanza);
+                    id_ordine = reader.GetInt32(8);
                 }
                 reader.Close();
             }

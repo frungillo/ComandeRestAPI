@@ -129,7 +129,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(menus);
         }
        
-        [HttpGet("getMenuByIdTavolo"), Obsolete]
+        [HttpGet("getMenuByIdTavolo"), Obsolete("Usiamo getMenu?")]
         public ActionResult<IEnumerable<Menu>> GetMenuByIdTavolo(int id_tavolo)
         {
             var namem = new List<Menu>();
@@ -175,7 +175,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(namem);
         }
         
-        [HttpGet("getTavolateByIdOperatore"), Obsolete]
+        [HttpGet("getTavolateByIdOperatore"), Obsolete("Se non erro viene usato getTavolateOdierne")]
         public ActionResult<IEnumerable<Tavolata>> GetTavolateByIdOperatore(int id_operatore)
         {
             List<Tavolata> list = new List<Tavolata>();
@@ -190,7 +190,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(list);
         }
         
-        [HttpGet("getTestataConto")]
+        [HttpGet("getTestataConto"), Obsolete("Non credo che usiamo ancora questo per avere il conto.")]
         public ActionResult<TestaConto> GetTestataConto(int idtavolata)
         {
             TestaConto tc = new TestaConto();
@@ -227,7 +227,10 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(tc);
         }
-        [HttpPost("setExtra"), Obsolete]
+        [HttpPost("setExtra"), 
+            Obsolete("Ora la logica dovrebbe essere qualle di usare updateComanda, però questo compila una tabella a parte!")
+            ]
+
         public IActionResult SetExtra(string id_pietanza, int quantita, float prezzo)
         {
             string sqlextra = $@"insert into extra (data, id_pietanza, prezzo, quantita) 
@@ -679,7 +682,7 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-        [HttpGet("getCorpoConto")]
+        [HttpGet("getCorpoConto"), Obsolete]
         public ActionResult<IEnumerable<CorpoConto>> GetCorpoConto(int idtavolata)
         {
             var conto = new List<CorpoConto>();
@@ -915,6 +918,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
+   
         private int CheckStatoTavolo(int idTsavolo)
         {
             int ret = -1;
@@ -946,6 +950,22 @@ namespace ComandeRestAPI.Controllers
             return Ok();
         }
 
+        [HttpGet("getComande")]
+        public ActionResult<Comanda[]> getComande(int id_tavolata) {
+            db db = new db();
+            List<Comanda> comande = new List<Comanda>();
+            string sql = "select id_comanda from comande where id_tavolata=" + id_tavolata;
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                Comanda c = new Comanda(r.GetInt32(0));
+                comande.Add(c);
+            }
+            db.CloseReader();
+            db.Dispose();
+            return Ok(comande.ToArray());
+        }
+
         [HttpPost("setComanda")]
         public ActionResult<int> SetComanda([FromBody] Comanda comanda)
         {
@@ -953,8 +973,8 @@ namespace ComandeRestAPI.Controllers
             //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
             VariazioneAllaPietanza = comanda.Variazioni?.Replace("'", "''").Trim();
             
-            string sqlcomande = $"insert into comande (id_tavolata, id_pietanza, quantita, variazioni, ora_comanda, stato) values ({comanda.Id_tavolata}, " +
-                $"'{comanda.Id_pietanza}', {comanda.Quantita}, '{VariazioneAllaPietanza}', SYSDATETIME(), '{comanda.Stato}');;SELECT SCOPE_IDENTITY();";
+            string sqlcomande = $"insert into comande (id_tavolata, id_pietanza, quantita, variazioni, ora_comanda, stato, id_ordine) values ({comanda.Id_tavolata}, " +
+                $"'{comanda.Id_pietanza}', {comanda.Quantita}, '{VariazioneAllaPietanza}', SYSDATETIME(), '{comanda.Stato}', {comanda.id_ordine});SELECT SCOPE_IDENTITY();";
             if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
             SqlCommand comm = new SqlCommand(sqlcomande, _conn);
             int idComanda= Convert.ToInt32( comm.ExecuteScalar());
@@ -995,7 +1015,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(true);
         }
 
-        [HttpPost("setComande"), Obsolete]
+        [HttpPost("setComande"), Obsolete("Questo invia una serie di comande ma non lo uso piu, uso setComanda (singola)")]
         public IActionResult SetComande([FromBody] List<Comande> comande)
         {
             foreach (Comande item in comande)
@@ -1021,7 +1041,7 @@ namespace ComandeRestAPI.Controllers
             return Ok();
         }
 
-        [HttpGet("getPulsantiPerInvioInCucina")]
+        [HttpGet("getPulsantiPerInvioInCucina"),Obsolete]
         public ActionResult<string> GetPulsantiPerInvioInCucina(int idTavolata)
         {
             db db = new db();
@@ -1045,7 +1065,8 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(html);
         }
-        [HttpPost("setStatoComanda")]
+        
+        [HttpPost("setStatoComanda"), Obsolete("inutile praticamente")]
         public async Task<IActionResult> SetStatoComandaAsync(string htmlButtonItemID, int idTavolata, string Stato, string oldStato)
         {
            // la stringa htmlButton distingue in qualche modo il TIPO PIETANZA
