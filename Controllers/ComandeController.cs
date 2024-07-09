@@ -12,6 +12,9 @@ using CrystalDecisions.CrystalReports.Engine;
 using System.Net.Http;
 
 using static ComandeRestAPI.Classi.ClassiStampa;
+using Newtonsoft.Json;
+using System.Text;
+using System.Xml.Serialization;
 
 namespace ComandeRestAPI.Controllers
 {
@@ -1151,6 +1154,8 @@ namespace ComandeRestAPI.Controllers
                 return ms.ToArray();
             }
         }
+
+
         [HttpPost("stampaOrdine")]
         public async Task<IActionResult> StampaOrdine(List<Comanda> listaOrigine, string oldStato)
         {
@@ -1159,29 +1164,38 @@ namespace ComandeRestAPI.Controllers
 
 
             List<Comande> list= new List<Comande>();
-
+            List<string> lista = new List<string>();
             foreach (Comanda comanda in listaOrigine) 
             {
+                Tavolata t = new Tavolata(comanda.Id_tavolata);
                 Comande c=new Comande(comanda.Id_comanda);
+                c.DescrizioneTavolata = t.Descrizione;
+                c.DescrizionPietanza = comanda.Pietanza.Descrizione;
+                c.Operatore = "oper";
+                c.Sala = "coperto";
                 list.Add(c);
+                lista.Add(comanda.Id_comanda.ToString());
                 
             }
+           
+
             try
             {
-                // Construct the URL with the required parameters
-                string url = _client.BaseAddress + $"/setStatoComanda?listaOrigine={list}&oldStato={oldStato}";
+                 string url = _client.BaseAddress + $"/stampaComande?listaID={string.Join(',',lista)}&oldStato={oldStato}";
 
                 // Execute the HTTP GET request
                 HttpResponseMessage response = await _client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    return Ok("Richiesta inviata con successo.");
+                }
+                else
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, $"Errore durante l'invio della richiesta: {responseContent}");
+                }
 
-                // Check if the request was successful
-                response.EnsureSuccessStatusCode();
-
-                // Read the response as a string
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                // Return the response as the content of the HTTP request
-                return Ok(responseBody);
+               
             }
             catch (HttpRequestException ex)
             {
