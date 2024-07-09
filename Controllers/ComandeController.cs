@@ -1069,12 +1069,12 @@ namespace ComandeRestAPI.Controllers
         [HttpPost("setStatoComanda"), Obsolete("inutile praticamente")]
         public async Task<IActionResult> SetStatoComandaAsync(string htmlButtonItemID, int idTavolata, string Stato, string oldStato)
         {
-           // la stringa htmlButton distingue in qualche modo il TIPO PIETANZA
-           // ad esempio se è "btn_t_9" si tratta di pietanza di tipo PIZZA
-          
+            // la stringa htmlButton distingue in qualche modo il TIPO PIETANZA
+            // ad esempio se è "btn_t_9" si tratta di pietanza di tipo PIZZA
 
-          try
-          {
+            //stampaComande( List<Comande> listaOrigine, string oldStato)
+            try
+            {
                     // Construct the URL with the required parameters
                     string url = _client.BaseAddress + $"/setStatoComanda?htmlButtonItemID={htmlButtonItemID}&idTavolata={idTavolata}&Stato={Stato}&oldStato={oldStato}";
 
@@ -1152,10 +1152,43 @@ namespace ComandeRestAPI.Controllers
             }
         }
         [HttpPost("stampaOrdine")]
-        public IActionResult StampaOrdine(string idRep, List<Comande> lista)
+        public async Task<IActionResult> StampaOrdine(List<Comanda> listaOrigine, string oldStato)
         {
-            Reparti rep = new Reparti(idRep);
-            Print(PrinterName(rep.nomestampante), GetDocument());
+            //stampaComande( List<Comande> listaOrigine, string oldStato)
+            // STATO "inviato" oppure "ristampa"
+
+
+            List<Comande> list= new List<Comande>();
+
+            foreach (Comanda comanda in listaOrigine) 
+            {
+                Comande c=new Comande(comanda.Id_comanda);
+                list.Add(c);
+                
+            }
+            try
+            {
+                // Construct the URL with the required parameters
+                string url = _client.BaseAddress + $"/setStatoComanda?listaOrigine={list}&oldStato={oldStato}";
+
+                // Execute the HTTP GET request
+                HttpResponseMessage response = await _client.GetAsync(url);
+
+                // Check if the request was successful
+                response.EnsureSuccessStatusCode();
+
+                // Read the response as a string
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                // Return the response as the content of the HTTP request
+                return Ok(responseBody);
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle HTTP request exceptions
+                return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
+            }
+
             return Ok();
         }
              
