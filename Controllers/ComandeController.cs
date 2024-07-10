@@ -35,7 +35,7 @@ namespace ComandeRestAPI.Controllers
         public ComandeController(IHttpClientFactory clientFactory, IWebHostEnvironment env, SqlConnection conn)
         {
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri("http://localhost:56515/mioserv.asmx");
+            _client.BaseAddress = new Uri("http://carboasmx.carbolandia.local:81/mioserv.asmx");
             _env = env;
             _conn = conn ?? new SqlConnection(db.connStr());
         }
