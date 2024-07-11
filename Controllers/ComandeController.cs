@@ -990,7 +990,7 @@ namespace ComandeRestAPI.Controllers
         public ActionResult<bool> UpdateComanda([FromBody] Comanda comanda)
         {
             string VariazioneAllaPietanza = "";
-            string sql_ora_stampa = comanda.Stato == "stampata" ? "ora_stampa=sysdatetime() " : " ";
+            string sql_ora_stampa = comanda.Stato == "stampata" ? ",ora_stampa=sysdatetime() " : " ";
             //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
             VariazioneAllaPietanza = comanda.Variazioni.Replace("'", "''").Trim();
 

@@ -20,6 +20,7 @@ builder.Services.AddCors(options =>
         {
             builder.AllowAnyOrigin()
                    .AllowAnyMethod()
+                   .WithExposedHeaders("Access-Control-Allow-Origin")
                    .AllowAnyHeader();
         });
 });
@@ -40,10 +41,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+
 
 // Use the configured CORS policy
 app.UseCors("AllowAllOrigins");
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
