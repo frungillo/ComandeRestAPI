@@ -733,6 +733,7 @@ namespace ComandeRestAPI.Classi
             {
                 list.Add(new Pietanza(r[0].ToString()));
             }
+            db.CloseReader();
             db.Dispose();
             return list;
         }
@@ -869,11 +870,13 @@ namespace ComandeRestAPI.Classi
                     pin = r[2].ToString(),
                     attivo = r.GetBoolean(3)
                 };
+                r.Close();
                 db.Dispose();
                 return operatore;
             }
             else
             {
+                r.Close();
                 db.Dispose();
                 return null;
             }

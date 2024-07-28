@@ -15,6 +15,7 @@ using static ComandeRestAPI.Classi.ClassiStampa;
 using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Serialization;
+using CrystalDecisions.ReportAppServer.CommonControls;
 
 namespace ComandeRestAPI.Controllers
 {
@@ -40,6 +41,7 @@ namespace ComandeRestAPI.Controllers
             _env = env;
             _conn = conn ?? new SqlConnection(db.connStr());
         }
+   
         [HttpGet("getPietanza")]
         public ActionResult<Pietanza> GetPietanza(string Id_pietanza)
         {
@@ -54,13 +56,16 @@ namespace ComandeRestAPI.Controllers
                 pie.Descrizione = r[1].ToString().Trim();
                 pie.Reparto = r[3].ToString().Trim();
             }
+            r.Close();
             _conn.Close();
             return Ok(pie);
         }
+
         [HttpGet("getPietanze")]
         public ActionResult<IEnumerable<Pietanza>> GetPietanze(string descrizione)
         {
             var names = new List<Pietanza>();
+            
             try
             {
                 if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
@@ -80,10 +85,13 @@ namespace ComandeRestAPI.Controllers
                     };
                     names.Add(p);
                 }
+                myReader.Close();
             }
             catch (Exception ex)
             {
                 // Handle exception
+            
+                _conn.Close();
                 return StatusCode(500, ex.Message);
             }
             finally
@@ -92,12 +100,15 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(names);
         }
+     
         [HttpGet("getPietanzeAttive")]
         public ActionResult<IEnumerable<Pietanza>> GetPietanzeAttive()
         {
             
             return Ok(Pietanza.GetPietanzeAttive());
         }
+
+
         [HttpGet("getMenu")]
         public ActionResult<IEnumerable<Menu>> GetMenu()
         {
@@ -120,10 +131,12 @@ namespace ComandeRestAPI.Controllers
                     };
                     menus.Add(m);
                 }
+                myReader.Close();
             }
             catch (Exception ex)
             {
                 // Handle exception
+                _conn.Close();
                 return StatusCode(500, ex.Message);
             }
             finally
@@ -133,59 +146,8 @@ namespace ComandeRestAPI.Controllers
             return Ok(menus);
         }
        
-        [HttpGet("getMenuByIdTavolo"), Obsolete("Usiamo getMenu?")]
-        public ActionResult<IEnumerable<Menu>> GetMenuByIdTavolo(int id_tavolo)
-        {
-            var namem = new List<Menu>();
-            try
-            {
-                if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
-                SqlCommand comm = new SqlCommand($@"
-                    with t as (
-                        select ordini.id_menu, quantita
-                        from ordini join menu 
-                        on menu.id_menu=ordini.id_menu
-                        where id_tavolata={id_tavolo})
-                    select a.id_menu, a.descrizione, a.tipo, a.prezzo, a.occasione, a.stato, isnull(t.quantita, 0) 
-                    from menu a  
-                    full outer join t on t.id_menu = a.id_menu  
-                    where stato ='True' 
-                    order by descrizione", _conn);
-                SqlDataReader myReader = comm.ExecuteReader();
-                while (myReader.Read())
-                {
-                    Menu m = new Menu
-                    {
-                        Id_menu = myReader[0].ToString(),
-                        Descrizione = myReader[1].ToString(),
-                        Prezzo = float.Parse(myReader[3].ToString()),
-                        Tipo = myReader[2].ToString(),
-                        Occasione = myReader[4].ToString(),
-                        Stato = bool.Parse(myReader[5].ToString()),
-                       // QuantitaOrdinata = myReader.GetInt32(6)
-                    };
-                    namem.Add(m);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle exception
-                return StatusCode(500, ex.Message);
-            }
-            finally
-            {
-                _conn.Close();
-            }
-            return Ok(namem);
-        }
         
-        [HttpGet("getTavolateByIdOperatore"), Obsolete("Se non erro viene usato getTavolateOdierne")]
-        public ActionResult<IEnumerable<Tavolata>> GetTavolateByIdOperatore(int id_operatore)
-        {
-            List<Tavolata> list = new List<Tavolata>();
-            list=Tavolata.GetTavolateByIdOperatore(id_operatore);
-            return Ok(list);
-        }
+ 
         [HttpGet("getTavolateOdierne")]
         public ActionResult<IEnumerable<Tavolata>> GetTavolateOdierne()
         {
@@ -194,57 +156,6 @@ namespace ComandeRestAPI.Controllers
             return Ok(list);
         }
         
-        [HttpGet("getTestataConto"), Obsolete("Non credo che usiamo ancora questo per avere il conto.")]
-        public ActionResult<TestaConto> GetTestataConto(int idtavolata)
-        {
-            TestaConto tc = new TestaConto();
-            try
-            {
-                if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
-                SqlCommand comm = new SqlCommand($@"
-                    select tavolata.descrizione, tavolata.data_ora_arrivo, tavolata.acconto, tavolata.sconto, 
-                    sale.descrizione, operatori.nominativo 
-                    from tavolata 
-                    left join sale on tavolata.id_sala = sale.id_sala 
-                    left join operatori on tavolata.id_operatore = operatori.id_operatore 
-                    where tavolata.id_tavolata ={idtavolata}", _conn);
-                SqlDataReader myReader = comm.ExecuteReader();
-                while (myReader.Read())
-                {
-                    tc.IdTavolata = idtavolata;
-                    tc.Tavolata = myReader[0].ToString();
-                    tc.Data_ora = myReader[1].ToString();
-                    tc.Acconto = float.Parse(myReader[2].ToString());
-                    tc.Sconto = float.Parse(myReader[3].ToString());
-                    tc.Sala = myReader[4].ToString();
-                    tc.Cameriere = myReader[5].ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle exception
-                return StatusCode(500, ex.Message);
-            }
-            finally
-            {
-                _conn.Close();
-            }
-            return Ok(tc);
-        }
-        [HttpPost("setExtra"), 
-            Obsolete("Ora la logica dovrebbe essere qualle di usare updateComanda, però questo compila una tabella a parte!")
-            ]
-
-        public IActionResult SetExtra(string id_pietanza, int quantita, float prezzo)
-        {
-            string sqlextra = $@"insert into extra (data, id_pietanza, prezzo, quantita) 
-                                 values ('{DateTime.Now}', '{id_pietanza}', {prezzo}, {quantita})";
-            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
-            SqlCommand comm = new SqlCommand(sqlextra, _conn);
-            comm.ExecuteNonQuery();
-            _conn.Close();
-            return Ok();
-        }
         [HttpGet("getIncassoDettaglio")]
         public ActionResult<IEnumerable<IncassoGiorno>> GetIncassoDettaglio(string data)
         {
@@ -305,6 +216,7 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(incasso);
         }
+    
         [HttpGet("getTotaleIncassato")]
         public ActionResult<float> GetTotaleIncassato(string data)
         {
@@ -318,63 +230,8 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(incasso);
         }
-        [HttpGet("getDettaglioContoTavolo")]
-        public ActionResult<string> GetDettaglioContoTavolo(int idTavolo)
-        {
-            string html = "<table id='dettaglioConto'>";
-            string sqlDettaglioTavolo = $@"
-                select TIPO=convert(varchar,ordini.id_ordine), ID=ordini.id_pietanza, MENU_Portata=pietanze.descrizione, Quantita=quantita, Prezzo_Unitario=pietanze.prezzo, TOTALE=quantita*pietanze.prezzo 
-                from ordini 
-                join pietanze on ordini.id_pietanza=pietanze.id_pietanza 
-                where id_tavolata={idTavolo}
-                union 
-                select convert(varchar,ordini.id_ordine), ordini.id_menu,menu.descrizione, quantita, menu.prezzo, quantita*menu.prezzo
-                from ordini 
-                join menu on menu.id_menu=ordini.id_menu
-                where id_tavolata={idTavolo}
-                union
-                select 'E',convert(varchar(10),prestazioni_extra.ID),prestazioni_extra.descrizione, quantita=1, prestazioni_extra.prezzo, prestazioni_extra.prezzo 
-                from prestazioni_extra 
-                join tavolata on prestazioni_extra.idTavolata=tavolata.id_tavolata 
-                where id_tavolata={idTavolo}";
-            string sqlAcconto = $@"
-                select tavolata.acconto, isnull(tavolata.sconto,0) 
-                from tavolata 
-                left join sale on tavolata.id_sala = sale.id_sala
-                left join operatori on tavolata.id_operatore = operatori.id_operatore 
-                where tavolata.id_tavolata ={idTavolo}";
-            db db = new db();
-            decimal acconto = 0; decimal sconto = 0;
-            SqlDataReader r = db.getReader(sqlAcconto);
-            r.Read(); acconto = r.GetSqlMoney(0).ToDecimal(); sconto = r.GetSqlMoney(1).ToDecimal();
-            db.CloseReader();
-            r = db.getReader(sqlDettaglioTavolo);
-            while (r.Read())
-            {
-                string id_comanda = r[0].ToString();
-                string disabledPrezzo = "disabled='disabled'";
-                string disabledQuantita = "";
-                if (r[0].ToString() == "E") { id_comanda = "Ex" + r[1].ToString(); disabledPrezzo = ""; disabledQuantita = "disabled='disabled'"; }
-                html += $@"
-                    <tr>
-                        <td>{r[2].ToString()}</td>
-                        <td><input type='text' id='txt_q_{id_comanda}' value='{r[3].ToString()}' {disabledQuantita} /></td>
-                        <td><input type='text' id='txt_p_{id_comanda}' value='{r[4].ToString()}' {disabledPrezzo} /></td>
-                        <td>{r[5].ToString()}</td>
-                        <td><input type='button' id='btn_s_{id_comanda}' value='Salva' onclick='SalvaComanda(\""{id_comanda}\"");' /></td>
-                        < td >< input type = 'button' id = 'btn_e_{id_comanda}' value = 'Elimina' onclick = 'EliminaComanda(\""{id_comanda}\"");' /></ td >
-                    </ tr > ";
-            }
-            html += $@"
-                <tr>
-                    <td colspan='3'>Acconto:<input type='text' id='txt_acc_{idTavolo}' value='{acconto}' /></td>
-                    <td colspan='3'>Sconto:<input type='text' id='txt_sco_{idTavolo}' value='{sconto}' /></td>
-                </tr>";
-            html += "<tr><td colspan='6' align='center'><input type='button' id='btn_salvatutto' value='Salva e Esci' onclick='salvaesci(\"" + idTavolo.ToString() + "\");'/></td></tr>";
-            html += "</table>";
-            db.Dispose();
-            return Ok(html);
-        }
+
+      
         [HttpGet("getTotaleContoTavolo")]
         public ActionResult<string> GetTotaleContoTavolo(int idtavolo)
         {
@@ -417,12 +274,14 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(string.Format("{0:0.00}", result));
         }
+
         [HttpGet("getTavolatabyID")]
         public ActionResult<Tavolata> GetTavolatabyID(int id)
         {
            
             return Ok(new Tavolata(id));
         }
+
         [HttpPost("aggiornaTavolo")]
         public IActionResult AggiornaTavolo([FromBody] Tavolata ta)
         {
@@ -447,6 +306,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
+
         [HttpPost("insertTavolata")]
         public IActionResult insertTavolata([FromBody] Tavolata ta)
         {
@@ -476,6 +336,7 @@ namespace ComandeRestAPI.Controllers
             return Ok();
 
         }
+
         [HttpPost("creaTavolata")]
         public IActionResult creaTavolata([FromBody] TavolataMini t)
         {
@@ -501,23 +362,8 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-        [HttpPost("salvaPrestazioneExtra"), Obsolete]
-        public IActionResult SalvaPrestazioneExtra(int IdPrestazione, string prezzo, bool delete)
-        {
-            string sql;
-            if (delete)
-            {
-                sql = "delete prestazioni_extra where ID=" + IdPrestazione.ToString();
-            }
-            else
-            {
-                sql = "update prestazioni_extra set prezzo=" + prezzo.Replace(",", ".") + " where ID=" + IdPrestazione.ToString();
-            }
-            db db = new db();
-            db.getReader(sql);
-            db.Dispose();
-            return Ok();
-        }
+
+        
         [HttpGet("getTavoliConto")]
         public ActionResult<string> GetTavoliConto(string ora)
         {
@@ -568,81 +414,9 @@ namespace ComandeRestAPI.Controllers
             html += "</table>";
             return Ok(html);
         }
-        [HttpGet("getSaleHtml"), Obsolete]
-        public ActionResult<string> GetSaleHtml()
-        {
-            db db = new db();
-            string html = "";
-            string sql = "select * from sale order by descrizione";
-            SqlDataReader r = db.getReader(sql);
-            while (r.Read())
-            {
-                int coperti = CopertiImpegnatiBySala(r.GetInt32(0));
-                html += $"<label><input type='radio' id='chk_{r[0].ToString()}' name='sale' onchange='setIdSala(this.id);' />{r[1].ToString()} ({coperti.ToString()}/{r[2].ToString()})</label> ";
-            }
-            db.Dispose();
-            return Ok(html);
-        }
-        private int CopertiImpegnatiBySala(int idsala)
-        {
-            db db = new db();
-            string sqlOra12 = $" and Datepart(HOUR, data_ora_arrivo) =12";
-            string sqlOra19 = $" and Datepart(HOUR, data_ora_arrivo) =19";
-            string ora = "";
-            if (DateTime.Now.Hour >= 10 && DateTime.Now.Hour < 19) ora = "12:00"; else ora = "19:00";
-            string sqlcoperti = $@"
-                select isnull(sum(tavolata.adulti) + sum(tavolata.bambini),0) 
-                from tavolata 	                       
-                where SYSDATETIME() BETWEEN tavolata.data_ora_arrivo and dateadd(day, 1, tavolata.data_ora_arrivo) and id_sala={idsala.ToString()}";
-            if (ora.Contains("12")) sqlcoperti += sqlOra12; else sqlcoperti += sqlOra19;
-            SqlDataReader rc = db.getReader(sqlcoperti);
-            rc.Read();
-            int coperti = rc.GetInt32(0);
-            db.Dispose();
-            return coperti;
-        }
-        [HttpPost("setPagato"), Obsolete]
-        public IActionResult SetPagato(int idtavolo, double importoContanti, double importoPOS)
-        {
-            db db = new db();
-            string sql_ricerca = $"select * from pagamenti where id_tavolata = {idtavolo}";
-            SqlDataReader r = db.getReader(sql_ricerca);
-            string sql_cassa = "";
-            if (r.HasRows)
-            {
-                sql_cassa = $"update pagamenti set conto_pos={importoPOS}, conto_contanti={importoContanti} where id_tavolata={idtavolo}";
-            }
-            else
-            {
-                sql_cassa = $@"
-                    INSERT INTO [dbo].[pagamenti]
-                    ([data_ora_registrazione], [id_tavolata], [conto_pos], [conto_contanti], [conto_altro])
-                    VALUES (convert(datetime, '{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}', 103), {idtavolo}, {importoPOS.ToString().Replace(",", ".")}, {importoContanti.ToString().Replace(",", ".")}, 0.0)";
-            }
-            string sql = $"update tavolata set stato='3', data_ora_conto=getdate() where id_tavolata = {idtavolo}";
-            db.CloseReader();
-            db.Esegui(sql_cassa);
-            db.Esegui(sql);
-            db.Dispose();
-            return Ok();
-        }
-        [HttpGet("creaPopupOperatori"), Obsolete]
-        public ActionResult<string> CreaPopupOperatori()
-        {
-            string html = $@"
-                <ul data-role='listview' id='lst_operatori' data-inset='true'>
-                    <li data-role='list-divider'>Seleziona Operatore</li>";
-            db db = new db();
-            string sql = "select id_operatore, nominativo from operatori order by nominativo";
-            SqlDataReader r = db.getReader(sql);
-            while (r.Read())
-            {
-                html += $"<li><input type='button' id='op_{r[0].ToString()}' value=\"{r[1].ToString()}\" onclick='cambiaOperatore(this.id);' /></li>";
-            }
-            html += "</ul>";
-            db.Dispose();
-            return Ok(html);
-        }
+
+   
+    
         [HttpPost("setCoperti")]
         public IActionResult SetCoperti(int idTavolo, string coperti)
         {
@@ -686,52 +460,7 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-        [HttpGet("getCorpoConto"), Obsolete]
-        public ActionResult<IEnumerable<CorpoConto>> GetCorpoConto(int idtavolata)
-        {
-            var conto = new List<CorpoConto>();
-            try
-            {
-                if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
-                SqlCommand comm = new SqlCommand($@"
-                    select ID=ordini.id_pietanza, MENU_Portata=pietanze.descrizione, Quantita=quantita, Prezzo_Unitario=pietanze.prezzo, TOTALE=quantita*pietanze.prezzo 
-                    from ordini 
-                    join pietanze on ordini.id_pietanza=pietanze.id_pietanza 
-                    where id_tavolata={idtavolata} 
-                    union 
-                    select ordini.id_menu,menu.descrizione, quantita, menu.prezzo, quantita*menu.prezzo 
-                    from ordini 
-                    join menu on menu.id_menu=ordini.id_menu 
-                    where id_tavolata={idtavolata} 
-                    union 
-                    select convert(varchar(10),prestazioni_extra.ID),prestazioni_extra.descrizione, quantita=1, prestazioni_extra.prezzo, prestazioni_extra.prezzo 
-                    from prestazioni_extra 
-                    join tavolata on prestazioni_extra.idTavolata=tavolata.id_tavolata 
-                    where id_tavolata={idtavolata}", _conn);
-                SqlDataReader myReader = comm.ExecuteReader();
-                float GT = 0;
-                while (myReader.Read())
-                {
-                    CorpoConto cc = new CorpoConto
-                    {
-                        Id = myReader[0].ToString(),
-                        Menu_portata = myReader[1].ToString(),
-                        Quantita = float.Parse(myReader[2].ToString()),
-                        Prezzo_unitario = float.Parse(myReader[3].ToString()),
-                        Totale = float.Parse(myReader[4].ToString())
-                    };
-                    GT += cc.Totale;
-                    cc.GranTotale = GT;
-                    conto.Add(cc);
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-            _conn.Close();
-            return Ok(conto);
-        }
+       
         [HttpGet("getMenudettaglio")]
         public ActionResult<IEnumerable<Menudettaglio>> GetMenudettaglio(string idmenu)
         {
@@ -769,6 +498,7 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(namemd);
         }
+
         [HttpGet("getTipiPietanze")]
         public ActionResult<List<TipiPietanze>> GetPulsantiPietanze()
         {
@@ -1019,142 +749,8 @@ namespace ComandeRestAPI.Controllers
             return Ok(true);
         }
 
-        [HttpPost("setComande"), Obsolete("Questo invia una serie di comande ma non lo uso piu, uso setComanda (singola)")]
-        public IActionResult SetComande([FromBody] List<Comande> comande)
-        {
-            foreach (Comande item in comande)
-            {
-                string VariazioneAllaPietanza = "";
-                Pietanza p = GetPietanza(item.IdPietanza).Value;
-                if (p.Descrizione.ToUpper().Trim() != item.Variazioni.ToUpper().Trim())
-                {
-                    VariazioneAllaPietanza = item.Variazioni.Replace("'", "''");
-                }
-                string sqlcomande = $"insert into comande (id_tavolata, id_pietanza, quantita, variazioni, ora_comanda) values ({item.IdTavolata}, '{item.IdPietanza}', {item.Quantita}, '{VariazioneAllaPietanza}', SYSDATETIME())";
-                if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
-                SqlCommand comm = new SqlCommand(sqlcomande, _conn);
-                comm.ExecuteNonQuery();
-                if (item.IsExtra == 1)
-                {
-                    Ordine ordine = new Ordine(){ Id_tavolata=item.IdTavolata, Id_voce= item.IdPietanza, Quantita = item.Quantita, Note_pietanza = item.Variazioni  };
-                    SetOrdine(ordine);
-                }
-                GC.Collect();
-            }
-            _conn.Close();
-            return Ok();
-        }
 
-        [HttpGet("getPulsantiPerInvioInCucina"),Obsolete]
-        public ActionResult<string> GetPulsantiPerInvioInCucina(int idTavolata)
-        {
-            db db = new db();
-            string sql = $@"
-                select tp.descrizione, tp.id_tipo
-                from comande c,
-                    tipi_pietanze tp,
-                    pietanze p
-                where c.id_tavolata = {idTavolata} 
-                    and p.id_pietanza = c.id_pietanza
-                    and tp.id_tipo = p.id_tipo
-                    and c.stato = 'attesa'
-                group by tp.descrizione, tp.id_tipo";
-            SqlDataReader r = db.getReader(sql);
-            string html = "<table style='overflow:auto;'><tr>";
-            while (r.Read())
-            {
-                html += $"<td><input type='button' id='btn_t_{r[1].ToString()}' value='{r[0].ToString()}' onclick=\"CambiaStatoComande(this,'attesa')\" /></td>";
-            }
-            html += "</tr></table>";
-            db.Dispose();
-            return Ok(html);
-        }
-        
-        [HttpPost("setStatoComanda"), Obsolete("inutile praticamente")]
-        public async Task<IActionResult> SetStatoComandaAsync(string htmlButtonItemID, int idTavolata, string Stato, string oldStato)
-        {
-            // la stringa htmlButton distingue in qualche modo il TIPO PIETANZA
-            // ad esempio se è "btn_t_9" si tratta di pietanza di tipo PIZZA
-
-            //stampaComande( List<Comande> listaOrigine, string oldStato)
-            try
-            {
-                    // Construct the URL with the required parameters
-                    string url = _client.BaseAddress + $"/setStatoComanda?htmlButtonItemID={htmlButtonItemID}&idTavolata={idTavolata}&Stato={Stato}&oldStato={oldStato}";
-
-                    // Execute the HTTP GET request
-                    HttpResponseMessage response = await _client.GetAsync(url);
-
-                    // Check if the request was successful
-                    response.EnsureSuccessStatusCode();
-
-                    // Read the response as a string
-                    string responseBody = await response.Content.ReadAsStringAsync();
-
-                    // Return the response as the content of the HTTP request
-                    return Ok(responseBody);
-          }
-          catch (HttpRequestException ex)
-          {
-                    // Handle HTTP request exceptions
-                    return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
-          }
-        }
-        private static void Print(string printerName, byte[] document)
-        {
-            NativeMethods.DOC_INFO_1 documentInfo;
-            IntPtr printerHandle;
-            documentInfo = new NativeMethods.DOC_INFO_1();
-            documentInfo.pDataType = "RAW";
-            documentInfo.pDocName = "Receipt";
-            printerHandle = new IntPtr(0);
-            if (NativeMethods.OpenPrinter(printerName.Normalize(), out printerHandle, IntPtr.Zero))
-            {
-                if (NativeMethods.StartDocPrinter(printerHandle, 1, documentInfo))
-                {
-                    int bytesWritten;
-                    byte[] managedData;
-                    IntPtr unmanagedData;
-                    managedData = document;
-                    unmanagedData = Marshal.AllocCoTaskMem(managedData.Length);
-                    Marshal.Copy(managedData, 0, unmanagedData, managedData.Length);
-                    if (NativeMethods.StartPagePrinter(printerHandle))
-                    {
-                        NativeMethods.WritePrinter(printerHandle, unmanagedData, managedData.Length, out bytesWritten);
-                        NativeMethods.EndPagePrinter(printerHandle);
-                    }
-                    else
-                    {
-                        throw new Win32Exception();
-                    }
-                    Marshal.FreeCoTaskMem(unmanagedData);
-                    NativeMethods.EndDocPrinter(printerHandle);
-                }
-                else
-                {
-                    throw new Win32Exception();
-                }
-                NativeMethods.ClosePrinter(printerHandle);
-            }
-            else
-            {
-                throw new Win32Exception();
-            }
-        }
-        private byte[] GetDocument()
-        {
-            using (var ms = new MemoryStream())
-            using (var bw = new BinaryWriter(ms))
-            {
-                bw.Write(ClassiStampa.AsciiControlChars.Escape);
-                bw.Write('@');
-                bw.LargeText("Jemaka");
-                bw.FeedLines(3);
-                bw.Finish();
-                bw.Flush();
-                return ms.ToArray();
-            }
-        }
+  
 
 
         [HttpPost("stampaOrdine")]
@@ -1233,6 +829,7 @@ namespace ComandeRestAPI.Controllers
                 return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
             }
         }
+
         [HttpPost("StampaPreContoTavolo")]
         public async Task<IActionResult> StampaPreContoTavolo(string idTavolo)
         {
@@ -1260,20 +857,7 @@ namespace ComandeRestAPI.Controllers
             }
         }
 
-        public static string PrinterName(string NomeStampante)
-        {
-            return $@"\\{Environment.MachineName}\{NomeStampante}";
-        }
-        private void RestartIis()
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "iisreset",
-                Arguments = "/restart",
-                CreateNoWindow = true,
-                UseShellExecute = false
-            }).WaitForExit();
-        }
+      
 
         [HttpGet("getOperatorebyNomeandById")]
         public ActionResult<Operatori> getOperatorebyNomeandById(string nominativo, string pin)
