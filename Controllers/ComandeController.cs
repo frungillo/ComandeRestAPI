@@ -369,7 +369,27 @@ namespace ComandeRestAPI.Controllers
             return Ok();
         }
 
-        
+        [HttpPost("creaPrenotazione")]
+        public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
+        {
+            string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
+            string sql = @$"insert into tavolata (data_ora_arrivo,id_cliente, stato, descrizione, adulti, bambini, note, id_sala)
+                            values (
+                                                {ora},
+                                                {t.IdCliente},
+                                                {t.Stato},
+                                                '{t.Descrizione}',
+                                                {t.Adulti},
+                                                {t.Bambini},
+                                               '{t.Note}',
+                                                {t.IdSala})";
+
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
+        }
+
         [HttpGet("getTavoliConto")]
         public ActionResult<string> GetTavoliConto(string ora)
         {

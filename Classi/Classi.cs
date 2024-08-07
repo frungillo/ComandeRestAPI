@@ -57,7 +57,22 @@ namespace ComandeRestAPI.Classi
 
         
     }
+    public class TavolataMini2
+    {
+        public DateTime Data_ora_arrivo { get; set; }
+        public int Stato { get; set; }
+        public int IdCliente { get; set; }
+        public string Descrizione { get; set; }
+        public string Note { get; set; }
+        public int Adulti { get; set; }
+        public int Bambini { get; set; }
+        public int IdSala { get; set; }
 
+        // Costruttore
+        public TavolataMini2() { }
+
+
+    }
 
     [Serializable]
     public class Tavolata
