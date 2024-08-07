@@ -193,6 +193,22 @@ namespace ComandeRestAPI.Classi
             return t;
 
         }
+        public static List<Tavolata> GetTavolateByData(DateTime data)
+        {
+            List<Tavolata> t = new List<Tavolata>();
+         
+            string sql = $@"SELECT * from tavolata where CONVERT(date, data_ora_arrivo,103) = CONVERT(date,'{data}',103) order by descrizione, id_sala";
+
+            db db = new db();
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                t.Add(new Tavolata((int)r[0]));
+            }
+            db.Dispose();
+            return t;
+
+        }
         public static List<Tavolata> GetTavolateOdierne()
         {
             List<Tavolata> t = new List<Tavolata>();

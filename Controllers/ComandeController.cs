@@ -155,7 +155,13 @@ namespace ComandeRestAPI.Controllers
             list = Tavolata.GetTavolateOdierne();
             return Ok(list);
         }
-        
+        [HttpGet("getTavolateByData")]
+        public ActionResult<IEnumerable<Tavolata>> GetTavolateByData(DateTime data)
+        {
+            List<Tavolata> list = new List<Tavolata>();
+            list = Tavolata.GetTavolateByData(data);
+            return Ok(list);
+        }
         [HttpGet("getIncassoDettaglio")]
         public ActionResult<IEnumerable<IncassoGiorno>> GetIncassoDettaglio(string data)
         {
