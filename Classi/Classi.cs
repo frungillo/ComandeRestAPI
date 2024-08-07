@@ -939,7 +939,7 @@ namespace ComandeRestAPI.Classi
                 id_stato = r.GetInt32(0);
                 descrizione = r[1].ToString();
                 colore= r[2].ToString();
-                colore_codice = r[2].ToString();
+                colore_codice = r[3].ToString();
             }
             else
             {
