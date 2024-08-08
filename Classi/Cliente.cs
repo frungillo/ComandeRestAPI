@@ -199,8 +199,8 @@ namespace ComandeRestAPI.Classi
             if (c.Email.Length == 0) c.Email="";
 
             string sql = $@"insert into clienti 
-             values('{c.Nome.Replace(",", ".")}',
-                     '{c.Cognome.Replace(",", ".")}',
+             values('{c.Nome.ToUpper().Replace(",", ".")}',
+                     '{c.Cognome.ToUpper().Replace(",", ".")}',
                      '{c.Telefono.Trim()}',
                      '{c.Email.Trim()}',
                      {data2},
