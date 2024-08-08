@@ -12,7 +12,7 @@ namespace ComandeRestAPI.Classi
         private string _nome;
         private string _cognome;
         private string _telefono;
-        private string _email;
+        private string? _email;
         private DateTime? _data_reg;
         private int _attivo;
         private string _note;
@@ -24,7 +24,7 @@ namespace ComandeRestAPI.Classi
         public string Nome { get => _nome; set => _nome = value; }
         public string Cognome { get => _cognome; set => _cognome = value; }
         public string Telefono { get => _telefono; set => _telefono = value; }
-        public string Email { get => _email; set => _email = value; }
+        public string? Email { get => _email; set => _email = value; }
         public DateTime? Data_reg { get => _data_reg; set => _data_reg = value; }
         public int Attivo { get => _attivo; set => _attivo = value; }
         public string Note { get => _note; set => _note = value; }
@@ -189,13 +189,14 @@ namespace ComandeRestAPI.Classi
             return;
 
         }
-        public async static Task<int> insert(Cliente c)
+        public static int insert(Cliente c)
         {
             db db = new db();
             string data = $"convert(datetime,'{c.Data_nascita?.ToShortDateString()}',103)";
             if (c.Data_nascita == null) data = "null";
             string data2 = $"convert(datetime,'{c.Data_reg?.ToShortDateString()}',103)";
             if (c.Data_reg == null) data2 = "null";
+            if (c.Email.Length == 0) c.Email="";
 
             string sql = $@"insert into clienti 
              values('{c.Nome.Replace(",", ".")}',

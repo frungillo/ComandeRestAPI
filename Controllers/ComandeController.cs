@@ -866,18 +866,19 @@ namespace ComandeRestAPI.Controllers
         {
            return Ok(Cliente.checkTelefono(telefono));  
         }
-        [HttpPost("insertCliente")]
+        [HttpGet("insertCliente")]
         public ActionResult<int> insertCliente(string nome, string cognome, string telefono)
         {
             Cliente cliente = new Cliente();
-            cliente.Nome = nome;
-            cliente.Cognome = cognome;
+            cliente.Nome = nome.ToUpper();
+            cliente.Cognome = cognome.ToUpper();
             cliente.Telefono = telefono;
             cliente.Attivo = 1;
             cliente.Data_reg=DateTime.Now;
             cliente.Note = "Inserito da App Gestori";
-          
-            return Ok(Cliente.insert(cliente));
+            cliente.Email = "";
+            int id = Cliente.insert(cliente);
+            return Ok(id);
         }
 
         [HttpGet("getClientebyID")]
