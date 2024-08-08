@@ -41,7 +41,6 @@ namespace ComandeRestAPI.Classi
 
         }
     }
-
     public class TavolataMini
     {
         public int NumeroTavolo { get; set; }
@@ -73,7 +72,6 @@ namespace ComandeRestAPI.Classi
 
 
     }
-
     [Serializable]
     public class Tavolata
     {
@@ -278,7 +276,6 @@ namespace ComandeRestAPI.Classi
 
         */
     }
-
     [Serializable]
     public class Sala
     {
@@ -310,7 +307,6 @@ namespace ComandeRestAPI.Classi
 
 
     }
-
     public class Reparti
     {
         public Reparti() { }
@@ -330,7 +326,6 @@ namespace ComandeRestAPI.Classi
         public string ip_stampante { get; set; }
         public string nomestampante { get; set; }
     }
-
     [Serializable]
     public class Comande
     {
@@ -485,10 +480,6 @@ namespace ComandeRestAPI.Classi
         
          */
     }
-
-
-
-
     [Serializable]
     public class Comanda
     {
@@ -547,9 +538,6 @@ namespace ComandeRestAPI.Classi
             
         }
     }
-
-
-
     [Serializable]
     public struct StatoComande
     {
@@ -704,7 +692,6 @@ namespace ComandeRestAPI.Classi
         }
     
     }
-  
     [Serializable]
     public class Pietanza
     {
@@ -834,7 +821,6 @@ namespace ComandeRestAPI.Classi
             
         }
     }
-   
     [Serializable]
     public struct Menudettaglio
     {
@@ -854,8 +840,7 @@ namespace ComandeRestAPI.Classi
         public int Id_tipo { get => _id_tipo; set => _id_tipo = value; }
         public string Num_alternanza { get => _num_alternanza; set => _num_alternanza = value; }
     }
-    
-    [Serializable]
+     [Serializable]
     public class Operatori 
     {
         private int id_operatore;
@@ -914,7 +899,6 @@ namespace ComandeRestAPI.Classi
         }
 
     }
-
     [Serializable]
     public class Stato 
     {

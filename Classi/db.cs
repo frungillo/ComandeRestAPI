@@ -1,6 +1,8 @@
 ﻿using System.Data.SqlClient;
 using System.Data;
 
+
+
 namespace ComandeRestAPI.Classi
 {
     class db : IDisposable
@@ -58,7 +60,30 @@ namespace ComandeRestAPI.Classi
             SqlCommand c = new SqlCommand(sql, _conn);
             return c.ExecuteNonQuery();
         }
+        public int exe(string sql)
+        {
+            try
+            {
+                SqlCommand c = new SqlCommand(sql, _conn);
+                return c.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
 
+                throw new Exception("Errore Update/insert/delete:" + ex.Message, ex);
+            }
 
+        }
+
+    }
+    public static class SqlDataReaderExstensions
+    {
+        public static DateTime? GetNullableDateTime(this SqlDataReader reader, int col)
+        {
+            // var col = reader.getordin();
+            return reader.IsDBNull(col) ?
+                        (DateTime?)null :
+                        (DateTime?)reader.GetDateTime(col);
+        }
     }
 }

@@ -60,7 +60,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(pie);
         }
-
         [HttpGet("getPietanze")]
         public ActionResult<IEnumerable<Pietanza>> GetPietanze(string descrizione)
         {
@@ -100,15 +99,12 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(names);
         }
-     
         [HttpGet("getPietanzeAttive")]
         public ActionResult<IEnumerable<Pietanza>> GetPietanzeAttive()
         {
             
             return Ok(Pietanza.GetPietanzeAttive());
         }
-
-
         [HttpGet("getMenu")]
         public ActionResult<IEnumerable<Menu>> GetMenu()
         {
@@ -145,9 +141,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(menus);
         }
-       
-        
- 
         [HttpGet("getTavolateOdierne")]
         public ActionResult<IEnumerable<Tavolata>> GetTavolateOdierne()
         {
@@ -155,7 +148,7 @@ namespace ComandeRestAPI.Controllers
             list = Tavolata.GetTavolateOdierne();
             return Ok(list);
         }
-        [HttpGet("getTavolateByData")]
+        [HttpGet("getTavolateByData")] // usata app Gestore
         public ActionResult<IEnumerable<Tavolata>> GetTavolateByData(DateTime data)
         {
             List<Tavolata> list = new List<Tavolata>();
@@ -222,7 +215,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(incasso);
         }
-    
         [HttpGet("getTotaleIncassato")]
         public ActionResult<float> GetTotaleIncassato(string data)
         {
@@ -236,8 +228,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(incasso);
         }
-
-      
         [HttpGet("getTotaleContoTavolo")]
         public ActionResult<string> GetTotaleContoTavolo(int idtavolo)
         {
@@ -280,14 +270,12 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(string.Format("{0:0.00}", result));
         }
-
         [HttpGet("getTavolatabyID")]
         public ActionResult<Tavolata> GetTavolatabyID(int id)
         {
            
             return Ok(new Tavolata(id));
         }
-
         [HttpPost("aggiornaTavolo")]
         public IActionResult AggiornaTavolo([FromBody] Tavolata ta)
         {
@@ -312,7 +300,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpPost("insertTavolata")]
         public IActionResult insertTavolata([FromBody] Tavolata ta)
         {
@@ -342,7 +329,6 @@ namespace ComandeRestAPI.Controllers
             return Ok();
 
         }
-
         [HttpPost("creaTavolata")]
         public IActionResult creaTavolata([FromBody] TavolataMini t)
         {
@@ -368,8 +354,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
-        [HttpPost("creaPrenotazione")]
+        [HttpPost("creaPrenotazione")] // usata app Gestore
         public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
         {
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
@@ -389,7 +374,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpGet("getTavoliConto")]
         public ActionResult<string> GetTavoliConto(string ora)
         {
@@ -440,9 +424,6 @@ namespace ComandeRestAPI.Controllers
             html += "</table>";
             return Ok(html);
         }
-
-   
-    
         [HttpPost("setCoperti")]
         public IActionResult SetCoperti(int idTavolo, string coperti)
         {
@@ -486,7 +467,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok();
         }
-       
         [HttpGet("getMenudettaglio")]
         public ActionResult<IEnumerable<Menudettaglio>> GetMenudettaglio(string idmenu)
         {
@@ -524,7 +504,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(namemd);
         }
-
         [HttpGet("getTipiPietanze")]
         public ActionResult<List<TipiPietanze>> GetPulsantiPietanze()
         {
@@ -555,7 +534,6 @@ namespace ComandeRestAPI.Controllers
             }
             return Ok(lst);
         }
-
         [HttpGet("getOrdini")]
         public ActionResult<Ordine[]> getOrdiniByTavolata(int idTavolata)
         {
@@ -578,14 +556,10 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(ret);
         }
-
         private bool IsNumeric(string input)
         {
             return double.TryParse(input, out _);
         }
-
-
-
         [HttpDelete("deleteOrdine/{idOrdine}")]
         public ActionResult<bool> deleteOrdine(int idOrdine)
         {
@@ -596,7 +570,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(true);
         }
-
         [HttpPost("setOrdine")]
         public ActionResult<int> SetOrdine([FromBody] Ordine ordine)
         {
@@ -653,7 +626,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(ret);
         }
-
         /// <summary>
         /// [Vecchio] aggiorna i dati dell'ordine
         /// </summary>
@@ -678,7 +650,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-   
         private int CheckStatoTavolo(int idTsavolo)
         {
             int ret = -1;
@@ -709,7 +680,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpGet("getComande")]
         public ActionResult<Comanda[]> getComande(int id_tavolata) {
             db db = new db();
@@ -725,7 +695,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok(comande.ToArray());
         }
-
         [HttpPost("setComanda")]
         public ActionResult<int> SetComanda([FromBody] Comanda comanda)
         {
@@ -742,7 +711,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(idComanda);
         }
-
         [HttpPost("updateComanda")]
         public ActionResult<bool> UpdateComanda([FromBody] Comanda comanda)
         {
@@ -763,7 +731,6 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(result);
         }
-
         [HttpDelete("deleteComanda/{idComanda}")]
         public ActionResult<bool> deleteComanda(int idComanda)
         {
@@ -774,12 +741,7 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(true);
         }
-
-
-  
-
-
-        [HttpPost("stampaOrdine")]
+        [HttpPost("stampaOrdine")] //USATA
         public async Task<IActionResult> StampaOrdine(List<Comanda> listaOrigine, string oldStato)
         {
             //stampaComande( List<Comande> listaOrigine, string oldStato)
@@ -828,8 +790,7 @@ namespace ComandeRestAPI.Controllers
 
             return Ok();
         }
-             
-        [HttpGet("StampaContoTavolo")]
+        [HttpGet("StampaContoTavolo")] //USATA
         public async Task<IActionResult> StampaContoTavolo(string idTavolo)
         {
             try
@@ -855,7 +816,6 @@ namespace ComandeRestAPI.Controllers
                 return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
             }
         }
-
         [HttpPost("StampaPreContoTavolo")]
         public async Task<IActionResult> StampaPreContoTavolo(string idTavolo)
         {
@@ -882,10 +842,7 @@ namespace ComandeRestAPI.Controllers
                 return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
             }
         }
-
-      
-
-        [HttpGet("getOperatorebyNomeandById")]
+        [HttpGet("getOperatorebyNomeandById")] //USATA
         public ActionResult<Operatori> getOperatorebyNomeandById(string nominativo, string pin)
         {
             Operatori? op = Operatori.Create(nominativo, pin);
@@ -895,6 +852,38 @@ namespace ComandeRestAPI.Controllers
             }
             return op;
         }
+      
+        
+        
+        /*SEZIONE RELATIVA ALLA TABELLA CLIENTI*/
 
+        /*METODI USATI IN:
+         - APP GESTORE 
+        */
+
+        [HttpGet("getClientebyTelefono")]
+        public ActionResult<string> getClientebyTelefono(string telefono)
+        {
+           return Ok(Cliente.checkTelefono(telefono));  
+        }
+        [HttpPost("insertCliente")]
+        public ActionResult<int> insertCliente(string nome, string cognome, string telefono)
+        {
+            Cliente cliente = new Cliente();
+            cliente.Nome = nome;
+            cliente.Cognome = cognome;
+            cliente.Telefono = telefono;
+            cliente.Attivo = 1;
+            cliente.Data_reg=DateTime.Now;
+            cliente.Note = "Inserito da App Gestori";
+          
+            return Ok(Cliente.insert(cliente));
+        }
+
+        [HttpGet("getClientebyID")]
+        public ActionResult<Cliente> getClientebyID(int id)
+        {
+            return Ok(new Cliente(id));
+        }
     }
 }
