@@ -251,6 +251,21 @@ namespace ComandeRestAPI.Classi
             return t;
 
         }
+        public static void deleteTavolata(int id_tavolata) 
+        {
+            db db = new db();
+            string sql = $@"delete from tavolata where id_tavolata={id_tavolata}";
+            try
+            {
+                SqlDataReader r = db.getReader(sql);
+
+            }
+            catch 
+            {
+            }
+            
+            db.Dispose();
+        }
         /*
         public static List<Tavolata> getTavoliAttiviAlReparto(string idReparto)
         {

@@ -342,7 +342,7 @@ namespace ComandeRestAPI.Controllers
                                                 {ora},
                                                 {t.IdOperatore},
                                                 1,
-                                                '{t.Descrizione}',
+                                                '{t.Descrizione.ToUpper().Replace("'","''")}',
                                                 {t.Adulti},
                                                 {t.Bambini},
                                                 {t.NumeroTavolo},
@@ -354,6 +354,25 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
+        [HttpDelete("deleteTavolata/{id_tavolata}")]
+        public ActionResult<bool> deletetavolata(int id_tavolata)
+        {
+            try
+            {
+                Tavolata.deleteTavolata(id_tavolata);
+                return Ok(true);
+            }
+            catch 
+            {
+                return Ok(false);
+            }
+            
+        }
+
+
+
+
+
         [HttpPost("creaPrenotazione")] // usata app Gestore
         public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
         {
@@ -363,7 +382,7 @@ namespace ComandeRestAPI.Controllers
                                                 {ora},
                                                 {t.IdCliente},
                                                 {t.Stato},
-                                                '{t.Descrizione}',
+                                                '{t.Descrizione.ToUpper().Replace("'", "''")}',
                                                 {t.Adulti},
                                                 {t.Bambini},
                                                '{t.Note}',
