@@ -354,7 +354,8 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-        [HttpDelete("deleteTavolata/{id_tavolata}")]
+      
+        [HttpDelete("deleteTavolata/{id_tavolata}")] // usata app Gestore
         public ActionResult<bool> deletetavolata(int id_tavolata)
         {
             try
