@@ -9,7 +9,7 @@ namespace ComandeRestAPI.Classi
     {
         //public static string DataSource = "192.168.1.225"; //"185.25.232.65,1433"; 
         public static string DataSource = "185.25.232.65,1433"; 
-        public static string DBName = "carbolandiatest";
+        public static string DBName = "carbolandia";
         //public static string connStr() { return "Data Source=79.9.136.241:11433;Initial Catalog=comandeweb;Persist Security Info=True;User ID=jmk;Password=napoli.081"; }
         public static string connStr() { return $@"Data Source={DataSource};Initial Catalog={DBName};Persist Security Info=True;User ID=sa;Password=avellino.081"; }
         private SqlConnection _conn;
@@ -74,6 +74,13 @@ namespace ComandeRestAPI.Classi
             }
 
         }
+        public async Task<SqlDataReader> getReaderAsync(string sql)
+        {
+            SqlCommand c = new SqlCommand(sql, _conn);
+
+            _r = await c.ExecuteReaderAsync();
+            return _r;
+        }
 
     }
     public static class SqlDataReaderExstensions
@@ -86,4 +93,17 @@ namespace ComandeRestAPI.Classi
                         (DateTime?)reader.GetDateTime(col);
         }
     }
+
+
+   
+    public class DB_Index : Attribute
+    {
+
+    }
+
+    public class DB_Exclude : Attribute
+    {
+
+    }
+    public class DB_LongTime : Attribute { }
 }

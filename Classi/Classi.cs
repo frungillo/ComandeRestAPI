@@ -2,6 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
+using System.Security.Policy;
+using System.Xml.Linq;
 
 namespace ComandeRestAPI.Classi
 {
@@ -58,6 +61,7 @@ namespace ComandeRestAPI.Classi
     }
     public class TavolataMini2
     {
+        public int Id_tavolata { get; set; }
         public DateTime Data_ora_arrivo { get; set; }
         public int Stato { get; set; }
         public int IdCliente { get; set; }
@@ -70,7 +74,31 @@ namespace ComandeRestAPI.Classi
         // Costruttore
         public TavolataMini2() { }
 
+        public TavolataMini2(int id) 
+        {
+            using (db db = new db())
+            {
+                SqlDataReader r = db.getReader($"select * from tavolata where id_tavolata={id}");
+                if (r.HasRows)
+                {
+                    r.Read();
+                    Id_tavolata = (int)r[0];
+                    Data_ora_arrivo = (DateTime)r[1];
+                    Stato = r.GetInt32(4);
+                    Adulti = (int)r[6];
+                    Bambini = int.Parse(r[7].ToString());
+                    IdSala = r.GetInt32(8);
+                    Descrizione = r[9].ToString();
+                    Note = r[10].ToString();
+                    IdCliente = (int)r[12];
+                }
+                else
+                {
 
+                    throw new Exception("Nessuna tavolata con questo ID");
+                }
+            }
+        }
     }
     [Serializable]
     public class Tavolata

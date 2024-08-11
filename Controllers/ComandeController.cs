@@ -370,10 +370,6 @@ namespace ComandeRestAPI.Controllers
             
         }
 
-
-
-
-
         [HttpPost("creaPrenotazione")] // usata app Gestore
         public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
         {
@@ -394,6 +390,24 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
+
+        [HttpPost("updatePrenotazione")] // usata app Gestore
+        public IActionResult updatePrenotazione([FromBody] TavolataMini2 t)
+        {
+           
+            string sql = @$"update tavolata 
+                            set note='{t.Note}',
+                                adulti={t.Adulti},
+                                bambini={t.Bambini}
+                            where id_tavolata={t.Id_tavolata}";
+
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
+        }
+
+
         [HttpGet("getTavoliConto")]
         public ActionResult<string> GetTavoliConto(string ora)
         {
@@ -906,5 +920,49 @@ namespace ComandeRestAPI.Controllers
         {
             return Ok(new Cliente(id));
         }
+
+        /*SEZIONE RELATIVA ALLA TABELLA SPESA*/
+        /*
+         * USATA IN
+         * - App Gestori
+         */
+
+        [HttpGet("getSpeseALL")] // usata app Gestore
+        public ActionResult<IEnumerable<Spesa>> getSpeseALL()
+        {
+            List<Spesa> list = new List<Spesa>();
+            list = Spesa.getAll();
+            return Ok(list);
+        }
+        [HttpPost("updateSpesa")]
+        public ActionResult<bool> updateSpesa([FromBody] Spesa spesa)
+        {
+            try 
+            { 
+                spesa.update();
+                return Ok(true);
+            }
+            catch 
+            {
+                return Ok(false);
+            }
+
+      
+        }
+        [HttpDelete("deleteSpesa/{idSpesa}")]
+        public ActionResult<bool> deleteSpesa(int idSpesa)
+        {
+            Spesa s = new Spesa(idSpesa);
+            try
+            {
+                s.delete();
+                return Ok(true);
+            }
+            catch 
+            {
+                return Ok(false) ;
+            }
+        }
+
     }
 }
