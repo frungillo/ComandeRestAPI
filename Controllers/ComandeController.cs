@@ -222,6 +222,7 @@ namespace ComandeRestAPI.Controllers
             if (DateTime.Now.Hour < 11) dt = dt.AddDays(-1);
             if (data == "") data = dt.ToShortDateString();
             float incasso = 0;
+
             foreach (IncassoGiorno item in GetIncassoDettaglio(data).Value)
             {
                 incasso += item.Totale - item.Acconto - item.Sconto;
