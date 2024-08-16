@@ -238,7 +238,7 @@ namespace ComandeRestAPI.Classi
         {
             List<Tavolata> t = new List<Tavolata>();
          
-            string sql = $@"SELECT * from tavolata where CONVERT(date, data_ora_arrivo,103) = CONVERT(date,'{data}',103) order by descrizione, id_sala";
+            string sql = $@"SELECT * from tavolata where CONVERT(date, data_ora_arrivo,103) = CONVERT(date,'{data}',103) order by data_ora_arrivo, descrizione, id_sala";
 
             db db = new db();
             SqlDataReader r = db.getReader(sql);
@@ -294,30 +294,46 @@ namespace ComandeRestAPI.Classi
             
             db.Dispose();
         }
-        /*
-        public static List<Tavolata> getTavoliAttiviAlReparto(string idReparto)
+        public static decimal getTotaleContoTavolo(int idtavolo)
         {
+            string sql = $@"with conto_dare as (
+                                select TIPO=convert(varchar,ordini.id_ordine), 
+		                                ID=ordini.id_pietanza, 
+		                                MENU_Portata=pietanze.descrizione, 
+		                                Quantita=quantita, 
+		                                Prezzo_Unitario=pietanze.prezzo, 
+		                                TOTALE=quantita*pietanze.prezzo
+                                                            from ordini join pietanze 
+                                                            on ordini.id_pietanza=pietanze.id_pietanza 
+                                                            where id_tavolata={idtavolo}
+                                                            union 
+                                                            select convert(varchar,ordini.id_ordine), ordini.id_menu,menu.descrizione, quantita, menu.prezzo, quantita*menu.prezzo
+                                                            from ordini join menu 
+                                                            on menu.id_menu=ordini.id_menu
+                                                            where id_tavolata={idtavolo}
+                                                            union
+                                                            select 'E',convert(varchar(10),prestazioni_extra.ID),prestazioni_extra.descrizione, quantita=1, prestazioni_extra.prezzo, prestazioni_extra.prezzo 
+                                                            from prestazioni_extra join tavolata 
+                                                            on prestazioni_extra.idTavolata=tavolata.id_tavolata 
+                                                            where id_tavolata={idtavolo}),  
+                                 conto_avere as (select tavolata.acconto,  isnull(tavolata.sconto,0) as sconto  
+                                from  tavolata left join sale on tavolata.id_sala = sale.id_sala
+                                                   left join operatori on tavolata.id_operatore = operatori.id_operatore 
+                                                   where tavolata.id_tavolata ={idtavolo}), 
+                                 totali as (
+                                select Sum(a.TOTALE) as Totale, b.acconto, b.sconto from conto_dare a, conto_avere b  group by b.acconto, b.sconto)
 
-            List<Tavolata> ret = new List<Tavolata>();
-            string endora = "";
-            string ora = "";
-            if (DateTime.Now.Hour >= 12 && DateTime.Now.Hour < 19) ora = "12:00"; else ora = "19:00";
-            if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
-            else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
+                                select Totale - sconto - acconto from totali
+                                ";
             db db = new db();
-            SqlDataReader r = db.getReader($"select * from tavolata where data_ora_arrivo  SYSDATETIME()			 BETWEEN data_ora_arrivo and dateadd(day, 1, data_ora_arrivo) ");
-            while (r.Read())
-            {
-                Tavolata t = new Tavolata(r.GetInt32(0));
-                t.ComandeReparto = Comande.getComandePerReparto(idReparto, t.Id);
-                if (t.ComandeReparto.Count > 0) ret.Add(t);
-            }
+            SqlDataReader r = db.getReader(sql);
+            r.Read();
+
+            Decimal result = 0;
+            if (r.HasRows) result = r.GetDecimal(0);
             db.Dispose();
-            return ret;
-    }
-
-
-        */
+            return result;
+        }
     }
     [Serializable]
     public class Sala
