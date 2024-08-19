@@ -70,6 +70,7 @@ namespace ComandeRestAPI.Classi
         public int Adulti { get; set; }
         public int Bambini { get; set; }
         public int IdSala { get; set; }
+        public string Item { get; set; }
 
         // Costruttore
         public TavolataMini2() { }
@@ -91,6 +92,7 @@ namespace ComandeRestAPI.Classi
                     Descrizione = r[9].ToString();
                     Note = r[10].ToString();
                     IdCliente = (int)r[12];
+                    Item = r[15].ToString();
                 }
                 else
                 {

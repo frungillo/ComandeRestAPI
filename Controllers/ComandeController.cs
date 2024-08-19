@@ -340,7 +340,7 @@ namespace ComandeRestAPI.Controllers
         public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
         {
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
-            string sql = @$"insert into tavolata (data_ora_arrivo,id_cliente, stato, descrizione, adulti, bambini, note, id_sala)
+            string sql = @$"insert into tavolata (data_ora_arrivo,id_cliente, stato, descrizione, adulti, bambini, note, id_sala,item)
                             values (
                                                 {ora},
                                                 {t.IdCliente},
@@ -349,7 +349,8 @@ namespace ComandeRestAPI.Controllers
                                                 {t.Adulti},
                                                 {t.Bambini},
                                                '{t.Note}',
-                                                {t.IdSala})";
+                                                {t.IdSala},
+                                               '{t.Item}')";
 
             db db = new db();
             db.getReader(sql);
