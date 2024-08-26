@@ -71,6 +71,7 @@ namespace ComandeRestAPI.Classi
         public int Bambini { get; set; }
         public int IdSala { get; set; }
         public string Item { get; set; }
+        public double Acconto { get; set; }
 
         // Costruttore
         public TavolataMini2() { }
@@ -93,6 +94,7 @@ namespace ComandeRestAPI.Classi
                     Note = r[10].ToString();
                     IdCliente = (int)r[12];
                     Item = r[15].ToString();
+                    Acconto = r.GetDouble(3);
                 }
                 else
                 {

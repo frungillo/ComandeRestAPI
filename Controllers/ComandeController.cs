@@ -165,12 +165,12 @@ namespace ComandeRestAPI.Controllers
                 if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
                 string data2 = DateTime.Parse(data).ToShortDateString();
                 string sql = $@"
-                    select DATA_ORA=extra.data, DESCRIZIONE1=pietanze.descrizione, DESCRIZIONE2='SENZA TAVOLO',extra.prezzo, extra.quantita, ACCONTO=0, SCONTO=0,TOTALE=extra.prezzo*extra.quantita
+                    select DATA_ORA=extra.data,  DESCRIZIONE1='SENZA TAVOLO', DESCRIZIONE2=pietanze.descrizione,extra.prezzo, extra.quantita, ACCONTO=0, SCONTO=0,TOTALE=extra.prezzo*extra.quantita
                     from extra 
                     inner join pietanze on extra.id_pietanza=pietanze.id_pietanza 
                     where (extra.data BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103)))
                     union 
-                    select DATA_ORA=tavolata.data_ora_arrivo, DESCRIZIONE1=pietanze.descrizione, DESCRIZIONE2='Tavolo '+tavolata.descrizione, pietanze.prezzo, ordini.quantita,ACCONTO=0, SCONTO=0, TOTALE=ordini.quantita*pietanze.prezzo
+                    select DATA_ORA=tavolata.data_ora_arrivo,  DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2=pietanze.descrizione, pietanze.prezzo, ordini.quantita,ACCONTO=0, SCONTO=0, TOTALE=ordini.quantita*pietanze.prezzo
                     from tavolata 
                     join ordini on tavolata.id_tavolata=ordini.id_tavolata 
                     join pietanze on pietanze.id_pietanza=ordini.id_pietanza 
@@ -182,14 +182,14 @@ namespace ComandeRestAPI.Controllers
                     join menu on menu.id_menu=ordini.id_menu 
                     where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and tavolata.stato = 3
                     union 
-                    select DATA_ORA=tavolata.data_ora_arrivo, DESCRIZIONE1=prestazioni_extra.descrizione,DESCRIZIONE2='Tavolo '+tavolata.descrizione,prestazioni_extra.prezzo, quantita=1, ACCONTO=0, SCONTO=0,TOTALE=prestazioni_extra.prezzo
+                    select DATA_ORA=tavolata.data_ora_arrivo, DESCRIZIONE1='Tavolo '+tavolata.descrizione,DESCRIZIONE2=prestazioni_extra.descrizione, prestazioni_extra.prezzo, quantita=1, ACCONTO=0, SCONTO=0,TOTALE=prestazioni_extra.prezzo
                     from tavolata 
                     join prestazioni_extra on prestazioni_extra.idTavolata=tavolata.id_tavolata
                     where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and tavolata.stato = 3
                     union 
-                    select DATA_ORA=tavolata.data_ora_arrivo,DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2='ACCONTO & SCONTO',prezzo=0,quantita=1,ACCONTO=tavolata.acconto,SCONTO=tavolata.sconto,TOTALE=0
+                    select DATA_ORA=tavolata.data_ora_arrivo,DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2='ACCONTO & SCONTO',  prezzo=0,quantita=1,ACCONTO=tavolata.acconto,SCONTO=tavolata.sconto,TOTALE=0
                     from tavolata 
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and tavolata.stato = 3 and (acconto <> 0 or sconto <> 0)
+                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (acconto <> 0 or sconto <> 0)
                     order by DATA_ORA";
                 SqlCommand comm = new SqlCommand(sql, _conn);
                 SqlDataReader myReader = comm.ExecuteReader();
@@ -327,6 +327,13 @@ namespace ComandeRestAPI.Controllers
             try
             {
                 Tavolata.deleteTavolata(id_tavolata);
+                // cancello anche eventuali Acconti dalla tabella Pagamenti
+                //cancella tutti i record che contengono idtav
+                var db = new db();
+                string sql = $@"delete from pagamenti where id_tavolata={id_tavolata}";
+                SqlDataReader r = db.getReader(sql);
+                int id_p = r.RecordsAffected;
+                db.Dispose();
                 return Ok(true);
             }
             catch 
@@ -339,8 +346,9 @@ namespace ComandeRestAPI.Controllers
         [HttpPost("creaPrenotazione")] // usata app Gestore
         public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
         {
+            double acconto=t.Acconto;
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
-            string sql = @$"insert into tavolata (data_ora_arrivo,id_cliente, stato, descrizione, adulti, bambini, note, id_sala,item)
+            string sql = @$"insert into tavolata (data_ora_arrivo,id_cliente, stato, descrizione, adulti, bambini, note, id_sala,item, acconto)
                             values (
                                                 {ora},
                                                 {t.IdCliente},
@@ -350,10 +358,28 @@ namespace ComandeRestAPI.Controllers
                                                 {t.Bambini},
                                                '{t.Note}',
                                                 {t.IdSala},
-                                               '{t.Item}')";
+                                               '{t.Item}',
+                                                {t.Acconto})  SELECT SCOPE_IDENTITY()";
 
             db db = new db();
-            db.getReader(sql);
+            SqlDataReader r = db.getReader(sql);
+            r.Read();
+            int index = int.Parse(r[0].ToString());
+            
+
+            if (acconto > 0) // devoinserire anche una registrazione in tabella Pagamenti
+            {
+                Pagamenti p = new Pagamenti();
+                p.Id_tavolata = index;
+                p.Data_ora_registrazione = DateTime.Now;
+                p.Conto_contanti = acconto; // diamo per default che l'acconto sia in contanti.....
+                p.Tipo = 2;
+                p.Conto_altro = 0;
+                p.Conto_pos = 0;
+                p.Note = "Registrazione di Acconto da App Gestori";
+                Pagamenti.insert(p);
+
+            }
             db.Dispose();
             return Ok();
         }
@@ -361,11 +387,13 @@ namespace ComandeRestAPI.Controllers
         [HttpPost("updatePrenotazione")] // usata app Gestore
         public IActionResult updatePrenotazione([FromBody] TavolataMini2 t)
         {
-           
+            string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
             string sql = @$"update tavolata 
                             set note='{t.Note}',
                                 adulti={t.Adulti},
-                                bambini={t.Bambini}
+                                bambini={t.Bambini},
+                                id_sala={t.IdSala},
+                                data_ora_arrivo={ora}
                             where id_tavolata={t.Id_tavolata}";
 
             db db = new db();
@@ -928,6 +956,20 @@ namespace ComandeRestAPI.Controllers
             catch 
             {
                 return Ok(false) ;
+            }
+        }
+
+        [HttpPost("insertSpesa")] // usata app Gestore
+        public IActionResult insertSpesa([FromBody] Spesa s)
+        {
+            try
+            {
+                s.insert();
+                return Ok();
+            }
+            catch 
+            {
+                return Ok(false);
             }
         }
 
