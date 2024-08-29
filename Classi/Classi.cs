@@ -194,7 +194,7 @@ namespace ComandeRestAPI.Classi
                     try{_sconto = decimal.Parse(r[11].ToString());} catch { }
                     _id_cliente = (int)r[12];
                     try { _preconto = decimal.Parse(r[13].ToString());} catch { }
-                    try{ _sconto = decimal.Parse(r[14].ToString());}  catch { }
+                    try{ _conto = decimal.Parse(r[14].ToString());}  catch { }
                     _item= r[15].ToString();
                     try { _numero_tavolo = (int)r[16]; } catch { }
                 }
