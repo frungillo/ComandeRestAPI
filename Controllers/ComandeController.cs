@@ -155,7 +155,20 @@ namespace ComandeRestAPI.Controllers
             list = Tavolata.GetTavolateByData(data);
             return Ok(list);
         }
-  
+
+        //
+        //getScontrinoTavolo
+        [HttpGet("getScontrinoTavolo")] // usata app Gestore
+        public ActionResult<IEnumerable<Scontrino>> getScontrinoTavoloa(int id_tavolata)
+        {
+            List<Scontrino> list = new List<Scontrino>();
+            list = Scontrino.getScontrinoTavolo(id_tavolata);
+            return Ok(list);
+        }
+
+
+
+
         [HttpGet("getIncassoDettaglio")]
         public ActionResult<IEnumerable<IncassoGiorno>> GetIncassoDettaglio(string data)
         {
@@ -320,8 +333,7 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-      
-        [HttpDelete("deleteTavolata/{id_tavolata}")] // usata app Gestore
+         [HttpDelete("deleteTavolata/{id_tavolata}")] // usata app Gestore
         public ActionResult<bool> deletetavolata(int id_tavolata)
         {
             try
@@ -342,7 +354,6 @@ namespace ComandeRestAPI.Controllers
             }
             
         }
-
         [HttpPost("creaPrenotazione")] // usata app Gestore
         public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
         {
@@ -383,7 +394,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
         [HttpPost("updatePrenotazione")] // usata app Gestore
         public IActionResult updatePrenotazione([FromBody] TavolataMini2 t)
         {
@@ -401,8 +411,6 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-
-
         [HttpGet("getTavoliConto")]
         public ActionResult<string> GetTavoliConto(string ora)
         {
