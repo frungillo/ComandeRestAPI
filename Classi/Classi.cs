@@ -8,6 +8,8 @@ using System.Xml.Linq;
 
 namespace ComandeRestAPI.Classi
 {
+
+
     public class logEventi
     {
         private int _idUtente = 999;
@@ -214,8 +216,10 @@ namespace ComandeRestAPI.Classi
             List<Tavolata> t = new List<Tavolata>();
             // string endora = "";
             string ora = "";
+            int ora_fine_pranzo =18;
+            try { ora_fine_pranzo = Convert.ToInt32(commons.recuperoParametri("ora_fine_pranzo")); }catch { }
 
-            if (DateTime.Now.Hour >= 9 && DateTime.Now.Hour < 17) ora = "12:00"; else ora = "19:00";
+            if (DateTime.Now.Hour >= 9 && DateTime.Now.Hour < ora_fine_pranzo ) ora = "12:00"; else ora = "19:00";
             /*
             if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
                 else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
@@ -259,8 +263,9 @@ namespace ComandeRestAPI.Classi
             List<Tavolata> t = new List<Tavolata>();
             // string endora = "";
             string ora = "";
-
-            if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 17) ora = "12:00"; else ora = "19:00";
+            int ora_fine_pranzo = 18;
+            try { ora_fine_pranzo = Convert.ToInt32(commons.recuperoParametri("ora_fine_pranzo")); } catch { }
+            if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < ora_fine_pranzo) ora = "12:00"; else ora = "19:00";
             /*
             if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
                 else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
