@@ -187,18 +187,18 @@ namespace ComandeRestAPI.Controllers
                     from tavolata 
                     join ordini on tavolata.id_tavolata=ordini.id_tavolata 
                     join pietanze on pietanze.id_pietanza=ordini.id_pietanza 
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and tavolata.stato = 3
+                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (tavolata.stato = 3 or tavolata.stato = 4)
                     union
                     select DATA_ORA=tavolata.data_ora_arrivo, DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2=menu.descrizione, menu.prezzo,ordini.quantita,ACCONTO=0, SCONTO=0, TOTALE=ordini.quantita*menu.prezzo
                     from tavolata 
                     join ordini on tavolata.id_tavolata=ordini.id_tavolata 
                     join menu on menu.id_menu=ordini.id_menu 
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and tavolata.stato = 3
+                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (tavolata.stato = 3 or tavolata.stato = 4)
                     union 
                     select DATA_ORA=tavolata.data_ora_arrivo, DESCRIZIONE1='Tavolo '+tavolata.descrizione,DESCRIZIONE2=prestazioni_extra.descrizione, prestazioni_extra.prezzo, quantita=1, ACCONTO=0, SCONTO=0,TOTALE=prestazioni_extra.prezzo
                     from tavolata 
                     join prestazioni_extra on prestazioni_extra.idTavolata=tavolata.id_tavolata
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and tavolata.stato = 3
+                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (tavolata.stato = 3 or tavolata.stato = 4)
                     union 
                     select DATA_ORA=tavolata.data_ora_arrivo,DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2='ACCONTO & SCONTO',  prezzo=0,quantita=1,ACCONTO=tavolata.acconto,SCONTO=tavolata.sconto,TOTALE=0
                     from tavolata 
