@@ -106,6 +106,28 @@ namespace ComandeRestAPI.Classi
             }
         }
     }
+    public struct TavoliStorico
+    {
+        public DateTime Data { get; set; }       // Per la data convertita
+        public int Adulti { get; set; }          // Numero di adulti
+        public int Bambini { get; set; }         // Numero di bambini
+        public string Stato { get; set; }        // Descrizione dello stato
+        public decimal Conto { get; set; }       // Importo del conto
+        public decimal Sconto { get; set; }      // Importo dello sconto
+        public string Pasto { get; set; }        // PRANZO, CENA o ALTRO
+
+        // Costruttore per inizializzare la struct
+        public TavoliStorico(DateTime data, int adulti, int bambini, string stato, decimal conto, decimal sconto, string pasto)
+        {
+            Data = data;
+            Adulti = adulti;
+            Bambini = bambini;
+            Stato = stato;
+            Conto = conto;
+            Sconto = sconto;
+            Pasto = pasto;
+        }
+    }
     [Serializable]
     public class Tavolata
     {

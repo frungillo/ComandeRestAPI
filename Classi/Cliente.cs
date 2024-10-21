@@ -262,6 +262,55 @@ namespace ComandeRestAPI.Classi
                 throw new Exception("Errore Salvataggio Cliente:" + ex.Message);
             }
         }
+
+       
+
+
+
+        public static List<TavoliStorico> getStoricoTavoli(int id_cliente)
+        {
+            List<TavoliStorico> list = new List<TavoliStorico>();
+
+            var db = new db();
+            string sql = $@"select 
+                    convert(date, T.data_ora_arrivo, 103) as Data, 
+	                 CASE 
+                        WHEN convert(time, T.data_ora_arrivo) = '12:00:00' THEN 'PRANZO'
+                        WHEN convert(time, T.data_ora_arrivo) = '19:00:00' THEN 'CENA'
+                        ELSE 'ALTRO'
+                    END as Pasto,
+                    T.Adulti, 
+                    T.Bambini, 
+                    S.Descrizione as Stato, 
+                    T.Conto, 
+                    T.Sconto
+   
+                from 
+                    tavolata T 
+                join 
+                    stato S 
+                    on T.stato = S.id_stato
+                where 
+                    id_cliente = {id_cliente};";
+            SqlDataReader r = db.getReader(sql);
+    
+            while (r.Read())
+            {
+               TavoliStorico t= new TavoliStorico();
+                t.Data = r.GetDateTime(0);
+                t.Pasto = r.GetString(1);
+                t.Adulti=r.GetInt32(2);
+                t.Bambini=r.GetInt32(3);
+                t.Stato=r.GetString(4);
+                t.Conto=r.GetDecimal(5);
+                t.Sconto=r.GetDecimal(6);
+                
+                list.Add(t);
+            }
+            db.Dispose();
+            return list;
+           
+        }
     }
 
 }

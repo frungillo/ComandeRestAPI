@@ -165,10 +165,13 @@ namespace ComandeRestAPI.Controllers
             list = Scontrino.getScontrinoTavolo(id_tavolata);
             return Ok(list);
         }
-
-
-
-
+        [HttpGet("getStoricoTavolibyCliente")] // usata app Gestore
+        public ActionResult<IEnumerable<TavoliStorico>> getStoricoTavolibyCliente(int id_cliente)
+        {
+            List<TavoliStorico> list = new List<TavoliStorico>();
+            list = Cliente.getStoricoTavoli(id_cliente);
+            return Ok(list);
+        }
         [HttpGet("getIncassoDettaglio")]
         public ActionResult<IEnumerable<IncassoGiorno>> GetIncassoDettaglio(string data)
         {
@@ -397,13 +400,15 @@ namespace ComandeRestAPI.Controllers
         [HttpPost("updatePrenotazione")] // usata app Gestore
         public IActionResult updatePrenotazione([FromBody] TavolataMini2 t)
         {
+            if (t.Stato != 5) t.Stato = 1;
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
             string sql = @$"update tavolata 
                             set note='{t.Note}',
                                 adulti={t.Adulti},
                                 bambini={t.Bambini},
                                 id_sala={t.IdSala},
-                                data_ora_arrivo={ora}
+                                data_ora_arrivo={ora},
+                                stato={t.Stato}
                             where id_tavolata={t.Id_tavolata}";
 
             db db = new db();
@@ -906,16 +911,23 @@ namespace ComandeRestAPI.Controllers
         [HttpGet("insertCliente")]
         public ActionResult<int> insertCliente(string nome, string cognome, string telefono)
         {
-            Cliente cliente = new Cliente();
-            cliente.Nome = nome.ToUpper();
-            cliente.Cognome = cognome.ToUpper();
-            cliente.Telefono = telefono;
-            cliente.Attivo = 1;
-            cliente.Data_reg=DateTime.Now;
-            cliente.Note = "Inserito da App Gestori";
-            cliente.Email = "";
-            int id = Cliente.insert(cliente);
-            return Ok(id);
+            Cliente c=new Cliente();
+            string id_cliente=Cliente.checkTelefono(telefono); // PER EVITARE INSERIMENTO NUMERO DUPLICATO
+            if (id_cliente=="NON TROVATO") 
+            {
+                Cliente cliente = new Cliente();
+                cliente.Nome = nome.ToUpper();
+                cliente.Cognome = cognome.ToUpper();
+                cliente.Telefono = telefono;
+                cliente.Attivo = 1;
+                cliente.Data_reg = DateTime.Now;
+                cliente.Note = "Inserito da App Gestori";
+                cliente.Email = "";
+                int id = Cliente.insert(cliente);
+                return Ok(id);
+            }
+            else return Convert.ToInt32(id_cliente);
+           
         }
 
         [HttpGet("getClientebyID")]
