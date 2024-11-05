@@ -437,6 +437,12 @@ namespace ComandeRestAPI.Classi
         {
             db db = new db();
             SqlDataReader r = db.getReader("select * from comande where id_comanda=" + id.ToString());
+            if (!r.HasRows)
+            {
+                logEventi log = new logEventi();
+                log.Scrivi("la classe comande non ha potuto essere istanziata perche è stato passato l'ID:" + id.ToString());
+                _idComande = -1;
+            }
             r.Read();
 
             _idComande = r.GetInt32(0);
