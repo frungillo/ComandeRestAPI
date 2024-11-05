@@ -942,6 +942,14 @@ namespace ComandeRestAPI.Controllers
             return Ok(new Cliente(id));
         }
 
+        [HttpGet("getAllCliente")]
+        public ActionResult<Cliente> getAllCliente(string filtro)
+        {
+            List<Cliente> list = new List<Cliente>();   
+            list=Cliente.GetAllCliente(filtro);
+            return Ok(list);
+        }
+
         /*SEZIONE RELATIVA ALLA TABELLA SPESA*/
         /*
          * USATA IN
