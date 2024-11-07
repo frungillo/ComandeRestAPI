@@ -80,7 +80,7 @@ namespace ComandeRestAPI.Classi
                 try { c.Cognome = r.GetString(1); } catch {c.Cognome = ""; }
                 try { c.Nome = r.GetString(2); } catch { c.Nome = ""; }
                 try { c.Telefono = r.GetString(3); } catch { c.Telefono = ""; }
-                c.Item=Convert.ToDecimal(r.GetString(4));
+                c.Item=Convert.ToDecimal(r.GetInt32(4));
                 list.Add(c);
             }
             db.Dispose();
