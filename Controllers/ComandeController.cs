@@ -950,6 +950,21 @@ namespace ComandeRestAPI.Controllers
             return Ok(list);
         }
 
+        [HttpGet("getTopTavolate")]
+        public ActionResult<ClienteMini> getTopTavolate()
+        {
+            List<ClienteMini> list = new List<ClienteMini>();
+            list = ClienteMini.GetTopTavolate();
+            return Ok(list);
+        }
+        [HttpGet("getTopConto")]
+        public ActionResult<ClienteMini> getTopConto()
+        {
+            List<ClienteMini> list = new List<ClienteMini>();
+            list = ClienteMini.GetTopConto();
+            return Ok(list);
+        }
+
         /*SEZIONE RELATIVA ALLA TABELLA SPESA*/
         /*
          * USATA IN

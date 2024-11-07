@@ -262,11 +262,7 @@ namespace ComandeRestAPI.Classi
                 throw new Exception("Errore Salvataggio Cliente:" + ex.Message);
             }
         }
-
-       
-
-
-
+             
         public static List<TavoliStorico> getStoricoTavoli(int id_cliente)
         {
             List<TavoliStorico> list = new List<TavoliStorico>();

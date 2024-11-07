@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CrystalDecisions.ReportAppServer.DataDefModel;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
@@ -44,6 +45,75 @@ namespace ComandeRestAPI.Classi
             db.Esegui(sql);
             db.Dispose();
 
+        }
+    }
+    public class ClienteMini 
+    {
+        //utilizzato per le info di Top Tavolate e Top Conti
+
+        public int IdCliente { get; set; }
+        public string Nome { get; set; }
+        public string Cognome { get; set; }
+        public string Telefono { get; set; }
+        public decimal Item { get; set; }
+        public ClienteMini() { }
+
+        public static List<ClienteMini> GetTopTavolate() 
+        {
+            List<ClienteMini> list = new List<ClienteMini>();
+            db db = new db();
+            string sql = $@"SELECT TOP 10 
+                               t.id_cliente, 
+                               c.cognome, 
+                               c.nome, 
+                               c.telefono, 
+                               COUNT(t.id_cliente) AS tavolate
+                               FROM tavolata t
+                               JOIN clienti c ON t.id_cliente = c.id_cliente
+                               GROUP BY t.id_cliente, c.nome, c.cognome, c.telefono
+                               ORDER BY tavolate DESC ";
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                ClienteMini c=new ClienteMini();
+                c.IdCliente=(int)r[0];
+                try { c.Cognome = r.GetString(1); } catch {c.Cognome = ""; }
+                try { c.Nome = r.GetString(2); } catch { c.Nome = ""; }
+                try { c.Telefono = r.GetString(3); } catch { c.Telefono = ""; }
+                c.Item=Convert.ToDecimal(r.GetString(4));
+                list.Add(c);
+            }
+            db.Dispose();
+          return list;
+        }
+   
+        public static List<ClienteMini> GetTopConto()
+        {
+            List<ClienteMini> list = new List<ClienteMini>();
+            db db = new db();
+            string sql = $@"SELECT TOP 20 
+                                t.id_cliente, 
+                                c.cognome, 
+                                c.nome, 
+                                c.telefono, 
+                                SUM(t.conto) AS totale_conto
+                            FROM tavolata t
+                            JOIN clienti c ON t.id_cliente = c.id_cliente
+                            GROUP BY t.id_cliente, c.nome, c.cognome, c.telefono
+                            ORDER BY totale_conto DESC";
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                ClienteMini c = new ClienteMini();
+                c.IdCliente = (int)r[0];
+                try { c.Cognome = r.GetString(1); } catch { c.Cognome = ""; }
+                try { c.Nome = r.GetString(2); } catch { c.Nome = ""; }
+                try { c.Telefono = r.GetString(3); } catch { c.Telefono = ""; }
+                c.Item = r.GetDecimal(4);
+                list.Add(c);
+            }
+            db.Dispose();
+            return list;
         }
     }
     public class TavolataMini
