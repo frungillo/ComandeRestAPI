@@ -796,6 +796,12 @@ namespace ComandeRestAPI.Controllers
             {
                 Tavolata t = new Tavolata(comanda.Id_tavolata);
                 Comande c=new Comande(comanda.Id_comanda);
+                if(c.IdComande == -1)
+                {
+                    logEventi log = new logEventi();
+                    log.Scrivi("Errore nella Stampaordine perche ID comande è negativo, listaorigine contiene " + listaOrigine.Count + " elementi e oldstato è " + oldStato);
+                    return StatusCode(500, "Errore ID comanda negativo perche non trovato nel DB passato" + comanda.Id_comanda);
+                }
                 c.DescrizioneTavolata = t.Descrizione;
                 c.DescrizionPietanza = comanda.Pietanza.Descrizione;
                 c.Operatore = "oper";
@@ -830,7 +836,7 @@ namespace ComandeRestAPI.Controllers
                 return StatusCode(500, $"Errore durante la chiamata al servizio ASMX: {ex.Message}");
             }
 
-            return Ok();
+            
         }
         [HttpGet("StampaContoTavolo")] //USATA
         public async Task<IActionResult> StampaContoTavolo(string idTavolo)
