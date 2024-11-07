@@ -51,11 +51,11 @@ namespace ComandeRestAPI.Classi
     {
         //utilizzato per le info di Top Tavolate e Top Conti
 
-        public int IdCliente { get; set; }
+        public int Id_cliente { get; set; }
         public string Nome { get; set; }
         public string Cognome { get; set; }
         public string Telefono { get; set; }
-        public decimal Item { get; set; }
+        public string Item { get; set; }
         public ClienteMini() { }
 
         public static List<ClienteMini> GetTopTavolate() 
@@ -76,11 +76,11 @@ namespace ComandeRestAPI.Classi
             while (r.Read())
             {
                 ClienteMini c=new ClienteMini();
-                c.IdCliente=(int)r[0];
+                c.Id_cliente=(int)r[0];
                 try { c.Cognome = r.GetString(1); } catch {c.Cognome = ""; }
                 try { c.Nome = r.GetString(2); } catch { c.Nome = ""; }
                 try { c.Telefono = r.GetString(3); } catch { c.Telefono = ""; }
-                c.Item=Convert.ToDecimal(r.GetInt32(4));
+                c.Item="# tav.: "+ r.GetInt32(4).ToString();
                 list.Add(c);
             }
             db.Dispose();
@@ -105,11 +105,11 @@ namespace ComandeRestAPI.Classi
             while (r.Read())
             {
                 ClienteMini c = new ClienteMini();
-                c.IdCliente = (int)r[0];
+                c.Id_cliente = (int)r[0];
                 try { c.Cognome = r.GetString(1); } catch { c.Cognome = ""; }
                 try { c.Nome = r.GetString(2); } catch { c.Nome = ""; }
                 try { c.Telefono = r.GetString(3); } catch { c.Telefono = ""; }
-                c.Item = r.GetDecimal(4);
+                c.Item = "tot.: "+r.GetDecimal(4).ToString("C2");
                 list.Add(c);
             }
             db.Dispose();
