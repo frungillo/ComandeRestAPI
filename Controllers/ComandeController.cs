@@ -1022,5 +1022,63 @@ namespace ComandeRestAPI.Controllers
             }
         }
 
+        /* SEZIONE RELATIVA ALLA TABELLA PRESTAZIONI_EXTRA*/
+
+        [HttpGet("getPrestazioniExtrabyTavolata")] // usata app Gestore
+        public ActionResult<IEnumerable<Prestazioni_extra>> getPrestazioniExtrabyTavolata(int id)
+        {
+            List<Prestazioni_extra> list = new List<Prestazioni_extra>();
+            list = Prestazioni_extra.getAll($" idtavolata={id}");
+            return Ok(list);
+        }
+        [HttpPost("updatePrestazioniExtra")]
+        public ActionResult<bool> updatePrestazioniExtra([FromBody] Prestazioni_extra pe)
+        {
+            try
+            {
+                pe.update();
+                return Ok(true);
+            }
+            catch
+            {
+                return Ok(false);
+            }
+
+
+        }
+        [HttpDelete("deletePrestazioneExtra/{id}")]
+        public ActionResult<bool> deletePrestazioneExtra(int id)
+        {
+           Prestazioni_extra pe = new Prestazioni_extra(id);
+            try
+            {
+                pe.delete();
+                return Ok(true);
+            }
+            catch
+            {
+                return Ok(false);
+            }
+        }
+
+        [HttpPost("insertPrestazioneExtra")] // usata app Gestore
+        public IActionResult insertPrestazioneExtra([FromBody] Prestazioni_extra pe)
+        {
+            try
+            {
+                pe.insert();
+                return Ok();
+            }
+            catch
+            {
+                return Ok(false);
+            }
+        }
+
+
+
+
+
+
     }
 }
