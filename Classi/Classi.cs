@@ -435,6 +435,16 @@ namespace ComandeRestAPI.Classi
             db.Dispose();
             return result;
         }
+        public static bool checkExtra(int idTavolata)
+        {
+            bool _ret = false;
+            string sql = $"select * from prestazioni_extra where idTavolata={idTavolata}";
+            db db = new db();
+            SqlDataReader r = db.getReader(sql);
+            if (r.HasRows) _ret = true;
+            db.Dispose();
+            return _ret;
+        }
     }
     [Serializable]
     public class Sala

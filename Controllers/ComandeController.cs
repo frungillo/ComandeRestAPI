@@ -900,9 +900,13 @@ namespace ComandeRestAPI.Controllers
             }
             return op;
         }
-      
-        
-        
+
+        [HttpGet("hasExtra")]
+        public ActionResult<bool> hasExtra(int id)
+        {  
+            return Ok(Classi.Tavolata.checkExtra(id));
+        }
+
         /*SEZIONE RELATIVA ALLA TABELLA CLIENTI*/
 
         /*METODI USATI IN:
@@ -1074,11 +1078,5 @@ namespace ComandeRestAPI.Controllers
                 return Ok(false);
             }
         }
-
-
-
-
-
-
     }
 }
