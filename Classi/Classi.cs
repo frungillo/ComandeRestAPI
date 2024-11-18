@@ -70,6 +70,7 @@ namespace ComandeRestAPI.Classi
                                COUNT(t.id_cliente) AS tavolate
                                FROM tavolata t
                                JOIN clienti c ON t.id_cliente = c.id_cliente
+                               where t.Stato=3
                                GROUP BY t.id_cliente, c.nome, c.cognome, c.telefono
                                ORDER BY tavolate DESC ";
             SqlDataReader r = db.getReader(sql);
