@@ -901,10 +901,30 @@ namespace ComandeRestAPI.Controllers
             return op;
         }
 
-        [HttpGet("hasExtra")]
-        public ActionResult<bool> hasExtra(int id)
-        {  
-            return Ok(Classi.Tavolata.checkExtra(id));
+        [HttpPost("hasExtra")]
+        public ActionResult<bool[]> HasExtra([FromBody] int[] ids)
+        {
+            if (ids == null || ids.Length == 0)
+            {
+                return BadRequest("Nessun ID fornito.");
+            }
+
+            try
+            {
+                List<bool> results = new List<bool>();
+                foreach (int id in ids)
+                {
+                    results.Add(Classi.Tavolata.checkExtra(id));
+                }
+
+                // Converte la lista in un array per la restituzione
+                return Ok(results.ToArray());
+            }
+            catch (Exception ex)
+            {
+                // Gestione degli errori
+                return StatusCode(500, $"Errore durante il controllo degli extra: {ex.Message}");
+            }
         }
 
         /*SEZIONE RELATIVA ALLA TABELLA CLIENTI*/
