@@ -85,6 +85,7 @@ namespace ComandeRestAPI.Controllers
                     names.Add(p);
                 }
                 myReader.Close();
+                _conn.Close();
             }
             catch (Exception ex)
             {
@@ -95,7 +96,8 @@ namespace ComandeRestAPI.Controllers
             }
             finally
             {
-                _conn.Close();
+                GC.Collect();
+                
             }
             return Ok(names);
         }
@@ -128,6 +130,7 @@ namespace ComandeRestAPI.Controllers
                     menus.Add(m);
                 }
                 myReader.Close();
+                _conn.Close();
             }
             catch (Exception ex)
             {
@@ -137,7 +140,7 @@ namespace ComandeRestAPI.Controllers
             }
             finally
             {
-                _conn.Close();
+                GC.Collect();
             }
             return Ok(menus);
         }
@@ -735,6 +738,7 @@ namespace ComandeRestAPI.Controllers
             }
             db.CloseReader();
             db.Dispose();
+            GC.Collect();
             return Ok(comande.ToArray());
         }
         [HttpPost("setComanda")]
@@ -756,22 +760,28 @@ namespace ComandeRestAPI.Controllers
         [HttpPost("updateComanda")]
         public ActionResult<bool> UpdateComanda([FromBody] Comanda comanda)
         {
-            string VariazioneAllaPietanza = "";
-            string sql_ora_stampa = comanda.Stato == "stampata" ? ",ora_stampa=sysdatetime() " : " ";
-            //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
-            VariazioneAllaPietanza = comanda.Variazioni.Replace("'", "''").Trim();
+            try
+            {
+                string VariazioneAllaPietanza = "";
+                string sql_ora_stampa = comanda.Stato == "stampata" ? ",ora_stampa=sysdatetime() " : " ";
+                //Pietanza p = GetPietanza(comanda.Id_pietanza).Value;
+                VariazioneAllaPietanza = comanda.Variazioni.Replace("'", "''").Trim();
 
-            string sqlcomande = $"update comande set quantita={comanda.Quantita}, " +
-                $"variazioni='{VariazioneAllaPietanza}', " +
-                $"stato = '{comanda.Stato}' " +
-                sql_ora_stampa + 
-                $"where id_comanda = {comanda.Id_comanda}";
-            if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
-            SqlCommand comm = new SqlCommand(sqlcomande, _conn);
-            bool result = Convert.ToBoolean(comm.ExecuteNonQuery());
-            GC.Collect();
-            _conn.Close();
-            return Ok(result);
+                string sqlcomande = $"update comande set quantita={comanda.Quantita}, " +
+                    $"variazioni='{VariazioneAllaPietanza}', " +
+                    $"stato = '{comanda.Stato}' " +
+                    sql_ora_stampa +
+                    $"where id_comanda = {comanda.Id_comanda}";
+                if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
+                SqlCommand comm = new SqlCommand(sqlcomande, _conn);
+                bool result = Convert.ToBoolean(comm.ExecuteNonQuery());
+                GC.Collect();
+                _conn.Close();
+                return Ok(result);
+            }
+            catch (Exception ex) {
+                return StatusCode(500, ex.Message);
+            }
         }
         [HttpDelete("deleteComanda/{idComanda}")]
         public ActionResult<bool> deleteComanda(int idComanda)
