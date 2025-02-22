@@ -382,7 +382,11 @@ namespace ComandeRestAPI.Controllers
             SqlDataReader r = db.getReader(sql);
             r.Read();
             int index = int.Parse(r[0].ToString());
-            
+
+            // INSERISCO UN LOG PER LA PRENOTAZIONE
+
+            commons.setLogMessage("CarboRicc", $@"Inserimento prenotazione per il  {t.Data_ora_arrivo} a nome {t.Descrizione} in sala {t.IdSala} con id_tavolata:{index.ToString()}");
+
 
             if (acconto > 0) // devoinserire anche una registrazione in tabella Pagamenti
             {

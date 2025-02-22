@@ -4,7 +4,24 @@ namespace ComandeRestAPI.Classi
 {
     public class commons
     {
-
+        public static void setLogMessage(string id_operatore, string msg)
+        {
+            string sql = $@"
+                            INSERT INTO [dbo].[log_eventi]
+                                       ([data]
+                                       ,[id_operatore]
+                                       ,[evento]
+                                       ,[note])
+                                 VALUES
+                                       (convert(datetime,'{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString().Replace(".", ":")}', 103)
+                                       ,'{id_operatore}'
+                                       ,'{msg.Replace("'", "''")}'
+                                       ,'ness')
+                            ";
+            db db = new db();
+            db.exe(sql);
+            db.Dispose();
+        }
         public static string recuperoParametri(string chiave)
         {
             // recupera i parametri di timing dalla tabella parametri_WA
