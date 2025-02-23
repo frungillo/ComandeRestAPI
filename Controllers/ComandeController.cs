@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using System.Text;
 using System.Xml.Serialization;
 using CrystalDecisions.ReportAppServer.CommonControls;
+using System.Reflection;
 
 namespace ComandeRestAPI.Controllers
 {
@@ -361,7 +362,7 @@ namespace ComandeRestAPI.Controllers
             
         }
         [HttpPost("creaPrenotazione")] // usata app Gestore
-        public IActionResult creaPrenotazione([FromBody] TavolataMini2 t)
+        public async Task<IActionResult> creaPrenotazione([FromBody] TavolataMini2 t)
         {
             double acconto=t.Acconto;
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
@@ -382,11 +383,27 @@ namespace ComandeRestAPI.Controllers
             SqlDataReader r = db.getReader(sql);
             r.Read();
             int index = int.Parse(r[0].ToString());
+            db.Dispose();
+
+            // ASPETTA 1 SECONDO PRIMA DI SCRIVERE IL LOG
+            await Task.Delay(1000);
 
             // INSERISCO UN LOG PER LA PRENOTAZIONE
-
-            commons.setLogMessage("CarboRicc", $@"Inserimento prenotazione per il  {t.Data_ora_arrivo} a nome {t.Descrizione} in sala {t.IdSala} con id_tavolata:{index.ToString()}");
-
+            string msg = $@"Inserimento prenotazione per il  {t.Data_ora_arrivo} a nome {t.Descrizione} in sala {t.IdSala} con id_tavolata:{index.ToString()}";
+            string sql2 = $@"
+                            INSERT INTO [dbo].[log_eventi]
+                                       ([data]
+                                       ,[id_operatore]
+                                       ,[evento]
+                                       ,[note])
+                                 VALUES
+                                       (convert(datetime,'{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString().Replace(".", ":")}', 103)
+                                       ,'CarboRicc'
+                                       ,'{msg.Replace("'", "''")}'
+                                       ,'Note da Carboricc')";
+            db db2 = new db();
+            db2.exe(sql2);
+            db2.Dispose();
 
             if (acconto > 0) // devoinserire anche una registrazione in tabella Pagamenti
             {
@@ -401,11 +418,13 @@ namespace ComandeRestAPI.Controllers
                 Pagamenti.insert(p);
 
             }
-            db.Dispose();
+            
             return Ok();
         }
+
+
         [HttpPost("updatePrenotazione")] // usata app Gestore
-        public IActionResult updatePrenotazione([FromBody] TavolataMini2 t)
+        public async Task<IActionResult> updatePrenotazione([FromBody] TavolataMini2 t)
         {
             if (t.Stato != 5) t.Stato = 1;
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
@@ -421,6 +440,26 @@ namespace ComandeRestAPI.Controllers
             db db = new db();
             db.getReader(sql);
             db.Dispose();
+
+            // ASPETTA 1 SECONDO PRIMA DI SCRIVERE IL LOG
+            await Task.Delay(1000);
+
+            // INSERISCO UN LOG PER LA PRENOTAZIONE
+            string msg = $@"Modifica prenotazione per il  {t.Data_ora_arrivo} a nome {t.Descrizione} in sala {t.IdSala} con id_tavolata:{t.Id_tavolata.ToString()}";
+            string sql2 = $@"
+                            INSERT INTO [dbo].[log_eventi]
+                                       ([data]
+                                       ,[id_operatore]
+                                       ,[evento]
+                                       ,[note])
+                                 VALUES
+                                       (convert(datetime,'{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString().Replace(".", ":")}', 103)
+                                       ,'CarboRicc'
+                                       ,'{msg.Replace("'", "''")}'
+                                       ,'Note da Carboricc')";
+            db db2 = new db();
+            db2.exe(sql2);
+            db2.Dispose();
             return Ok();
         }
         [HttpGet("getTavoliConto")]
