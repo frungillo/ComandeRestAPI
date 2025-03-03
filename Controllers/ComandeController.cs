@@ -37,7 +37,7 @@ namespace ComandeRestAPI.Controllers
         public ComandeController(IHttpClientFactory clientFactory, IWebHostEnvironment env, SqlConnection conn)
         {
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri("http://192.168.1.225:81/mioserv.asmx"); 
+            _client.BaseAddress = new Uri("http://192.168.0.225:81/mioserv.asmx"); 
             //_client.BaseAddress = new Uri("http://localhost:56515/mioserv.asmx");
             _env = env;
             _conn = conn ?? new SqlConnection(db.connStr());
@@ -837,7 +837,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(true);
         }
         [HttpPost("stampaOrdine")] //USATA
-        public async Task<IActionResult> StampaOrdine(List<Comanda> listaOrigine, string oldStato)
+        public async Task<IActionResult> StampaOrdine(List<Comanda> listaOrigine, string oldStato, int idOperatore)
         {
             //stampaComande( List<Comande> listaOrigine, string oldStato)
             // STATO "inviato" oppure "ristampa"
@@ -867,7 +867,7 @@ namespace ComandeRestAPI.Controllers
 
             try
             {
-                 string url = _client.BaseAddress + $"/stampaComande?listaID={string.Join(',',lista)}&oldStato={oldStato}";
+                 string url = _client.BaseAddress + $"/stampaComande?listaID={string.Join(',',lista)}&oldStato={oldStato}&idOperatore={idOperatore}";
 
                 // Execute the HTTP GET request
                 HttpResponseMessage response = await _client.GetAsync(url);
