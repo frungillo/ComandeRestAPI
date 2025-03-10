@@ -286,6 +286,26 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
+
+        [HttpPost("aggiornaTavolataMini")]
+        public IActionResult AggiornaTavolataMini([FromBody] TavolataMini ta, int id_tavolata)
+        {
+            //if (ta.Acconto == "") acconto = "0.0";
+            //if (sconto == "") sconto = "0.0";
+            string sql = @$"update tavolata set 
+                            adulti={ta.Adulti},
+                            bambini={ta.Bambini},
+                            id_sala={ta.IdSala},
+                            descrizione='{ta.Descrizione}',
+                            note='{ta.Note}',
+                            numero_tavolo={ta.NumeroTavolo}
+                            where id_tavolata={id_tavolata}";
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
+        }
+
         [HttpPost("insertTavolata")]
         public IActionResult insertTavolata([FromBody] Tavolata ta)
         {
