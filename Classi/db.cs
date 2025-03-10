@@ -7,7 +7,9 @@ namespace ComandeRestAPI.Classi
 {
     class db : IDisposable
     {
-        public static string DataSource = "192.168.1.225"; //"185.25.232.65,1433"; 
+        //public static string DataSource = "192.168.1.225"; //"185.25.232.65,1433"; 
+       // public static string DataSource = "192.168.0.225,1433"; //"185.25.232.65,1433"; 
+        public static string DataSource = "192.168.0.225,1433"; //"185.25.232.65,1433"; 
         //public static string DataSource = "185.25.232.65,1433";
         //public static string DataSource = "88.53.102.237,1433";
         //public static string DataSource = "carbolandia.tplinkdns.com";
