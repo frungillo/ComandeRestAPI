@@ -320,8 +320,8 @@ namespace ComandeRestAPI.Controllers
                                                 {ta.Adulti},
                                                 {ta.Bambini},
                                                 {ta.Id_sala},
-                                                '{ta.Descrizione}'
-                                                '{ta.Note}',    
+                                                '{ta.Descrizione.Replace("'", "''")}'
+                                                '{ta.Note.Replace("'", "''")}',    
                                                 {ta.Sconto},
                                                 {ta.Id_cliente},
                                                 {ta.Preconto},
@@ -394,7 +394,7 @@ namespace ComandeRestAPI.Controllers
                                                 '{t.Descrizione.ToUpper().Replace("'", "''")}',
                                                 {t.Adulti},
                                                 {t.Bambini},
-                                               '{t.Note}',
+                                               '{t.Note.Replace("'", "''")}',
                                                 {t.IdSala},
                                                '{t.Item}',
                                                 {t.Acconto})  SELECT SCOPE_IDENTITY()";
@@ -449,7 +449,7 @@ namespace ComandeRestAPI.Controllers
             if (t.Stato != 5) t.Stato = 1;
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
             string sql = @$"update tavolata 
-                            set note='{t.Note}',
+                            set note='{t.Note.Replace("'", "''")}',
                                 adulti={t.Adulti},
                                 bambini={t.Bambini},
                                 id_sala={t.IdSala},
