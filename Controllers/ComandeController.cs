@@ -37,7 +37,7 @@ namespace ComandeRestAPI.Controllers
         public ComandeController(IHttpClientFactory clientFactory, IWebHostEnvironment env, SqlConnection conn)
         {
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri("http://192.168.1.225:81/mioserv.asmx"); 
+            _client.BaseAddress = new Uri("http://192.168.0.225:81/mioserv.asmx"); 
             //_client.BaseAddress = new Uri("http://localhost:56515/mioserv.asmx");
             _env = env;
             _conn = conn ?? new SqlConnection(db.connStr());
@@ -286,6 +286,26 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
+
+        [HttpPost("aggiornaTavolataMini")]
+        public IActionResult AggiornaTavolataMini([FromBody] TavolataMini ta, int id_tavolata)
+        {
+            //if (ta.Acconto == "") acconto = "0.0";
+            //if (sconto == "") sconto = "0.0";
+            string sql = @$"update tavolata set 
+                            adulti={ta.Adulti},
+                            bambini={ta.Bambini},
+                            id_sala={ta.IdSala},
+                            descrizione='{ta.Descrizione}',
+                            note='{ta.Note}',
+                            numero_tavolo={ta.NumeroTavolo}
+                            where id_tavolata={id_tavolata}";
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
+        }
+
         [HttpPost("insertTavolata")]
         public IActionResult insertTavolata([FromBody] Tavolata ta)
         {
@@ -300,8 +320,8 @@ namespace ComandeRestAPI.Controllers
                                                 {ta.Adulti},
                                                 {ta.Bambini},
                                                 {ta.Id_sala},
-                                                '{ta.Descrizione}'
-                                                '{ta.Note}',    
+                                                '{ta.Descrizione.Replace("'", "''")}'
+                                                '{ta.Note.Replace("'", "''")}',    
                                                 {ta.Sconto},
                                                 {ta.Id_cliente},
                                                 {ta.Preconto},
@@ -374,7 +394,7 @@ namespace ComandeRestAPI.Controllers
                                                 '{t.Descrizione.ToUpper().Replace("'", "''")}',
                                                 {t.Adulti},
                                                 {t.Bambini},
-                                               '{t.Note}',
+                                               '{t.Note.Replace("'", "''")}',
                                                 {t.IdSala},
                                                '{t.Item}',
                                                 {t.Acconto})  SELECT SCOPE_IDENTITY()";
@@ -429,7 +449,7 @@ namespace ComandeRestAPI.Controllers
             if (t.Stato != 5) t.Stato = 1;
             string ora = $"convert(datetime, '{t.Data_ora_arrivo}', 103)";
             string sql = @$"update tavolata 
-                            set note='{t.Note}',
+                            set note='{t.Note.Replace("'", "''")}',
                                 adulti={t.Adulti},
                                 bambini={t.Bambini},
                                 id_sala={t.IdSala},
@@ -837,7 +857,7 @@ namespace ComandeRestAPI.Controllers
             return Ok(true);
         }
         [HttpPost("stampaOrdine")] //USATA
-        public async Task<IActionResult> StampaOrdine(List<Comanda> listaOrigine, string oldStato)
+        public async Task<IActionResult> StampaOrdine(List<Comanda> listaOrigine, string oldStato, int idOperatore)
         {
             //stampaComande( List<Comande> listaOrigine, string oldStato)
             // STATO "inviato" oppure "ristampa"
@@ -867,7 +887,7 @@ namespace ComandeRestAPI.Controllers
 
             try
             {
-                 string url = _client.BaseAddress + $"/stampaComande?listaID={string.Join(',',lista)}&oldStato={oldStato}";
+                 string url = _client.BaseAddress + $"/stampaComande?listaID={string.Join(',',lista)}&oldStato={oldStato}&idOperatore={idOperatore}";
 
                 // Execute the HTTP GET request
                 HttpResponseMessage response = await _client.GetAsync(url);

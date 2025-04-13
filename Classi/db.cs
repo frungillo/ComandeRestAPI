@@ -8,9 +8,11 @@ namespace ComandeRestAPI.Classi
     class db : IDisposable
     {
         //public static string DataSource = "192.168.1.225"; //"185.25.232.65,1433"; 
+       // public static string DataSource = "192.168.0.225,1433"; //"185.25.232.65,1433"; 
+        public static string DataSource = "192.168.0.225,1433"; //"185.25.232.65,1433"; 
         //public static string DataSource = "185.25.232.65,1433";
         //public static string DataSource = "88.53.102.237,1433";
-        public static string DataSource = "carbolandia.tplinkdns.com.,1433";
+        //public static string DataSource = "carbolandia.tplinkdns.com";
         public static string DBName = "carbolandia";
         //public static string connStr() { return "Data Source=79.9.136.241:11433;Initial Catalog=comandeweb;Persist Security Info=True;User ID=jmk;Password=napoli.081"; }
         public static string connStr() { return $@"Data Source={DataSource};Initial Catalog={DBName};Persist Security Info=True;User ID=sa;Password=avellino.081;Max Pool Size=300;"; }
