@@ -339,7 +339,7 @@ namespace ComandeRestAPI.Classi
         {
             List<Tavolata> t = new List<Tavolata>();
          
-            string sql = $@"SELECT id_tavolata from tavolata where CONVERT(date, data_ora_arrivo,103) = CONVERT(date,'{data}',103) order by descrizione, id_sala";
+            string sql = $@"SELECT id_tavolata from tavolata where CONVERT(date, data_ora_arrivo,103) = CONVERT(date,'{data}',103) order by data_ora_arrivo, id_sala, descrizione";
 
             db db = new db();
             SqlDataReader r = db.getReader(sql);
