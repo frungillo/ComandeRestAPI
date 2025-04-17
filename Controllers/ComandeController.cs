@@ -287,6 +287,16 @@ namespace ComandeRestAPI.Controllers
             return Ok();
         }
 
+        [HttpPost("updateSTatoTavolata")]
+        public IActionResult UpdateStatoTavolata(int id_tavolata, int stato)
+        {
+            string sql = $@"update tavolata set stato={stato} where id_tavolata={id_tavolata}";
+            db db = new db();
+            db.getReader(sql);
+            db.Dispose();
+            return Ok();
+        }
+
         [HttpPost("aggiornaTavolataMini")]
         public IActionResult AggiornaTavolataMini([FromBody] TavolataMini ta, int id_tavolata)
         {
