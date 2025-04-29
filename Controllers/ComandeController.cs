@@ -464,7 +464,10 @@ namespace ComandeRestAPI.Controllers
                                 bambini={t.Bambini},
                                 id_sala={t.IdSala},
                                 data_ora_arrivo={ora},
-                                stato={t.Stato}
+                                stato={t.Stato},
+                                acconto={t.Acconto},
+                                descrizione='{t.Descrizione.ToUpper().Replace("'", "''")}',
+                                item='{t.Item}'
                             where id_tavolata={t.Id_tavolata}";
 
             db db = new db();
