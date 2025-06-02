@@ -451,7 +451,42 @@ namespace ComandeRestAPI.Controllers
             
             return Ok();
         }
+      
+        [HttpPost("stampaScontrino")] // usata app Gestore
+        public async Task<IActionResult> StampaPDF([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File mancante");
 
+            var tempPath = Path.Combine(Path.GetTempPath(), file.FileName);
+
+            using (var stream = new FileStream(tempPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            try
+            {
+                // Chiama la funzione per stampare
+                StampaPdf(tempPath);
+                return Ok("Stampa avviata");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Errore durante la stampa: {ex.Message}");
+            }
+        }
+        public void StampaPdf(string filePath)
+        {
+            var acrobatPath = @"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe";
+        
+            var process = new Process();
+            process.StartInfo.FileName = acrobatPath;
+            process.StartInfo.Arguments = $"/h /t \"{filePath}\" \"POS-CASSA\"";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+        }
 
         [HttpPost("updatePrenotazione")] // usata app Gestore
         public async Task<IActionResult> updatePrenotazione([FromBody] TavolataMini2 t)

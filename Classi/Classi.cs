@@ -47,6 +47,7 @@ namespace ComandeRestAPI.Classi
 
         }
     }
+
     public class ClienteMini 
     {
         //utilizzato per le info di Top Tavolate e Top Conti
@@ -943,6 +944,7 @@ namespace ComandeRestAPI.Classi
         public string Nominativo { get; set; }
 
     }
+
     [Serializable]
     public class Menu
     {
