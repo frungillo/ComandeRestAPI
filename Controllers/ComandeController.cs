@@ -451,7 +451,7 @@ namespace ComandeRestAPI.Controllers
             
             return Ok();
         }
-      
+      /*
         [HttpPost("stampaScontrino")] // usata app Gestore
         public async Task<IActionResult> StampaPDF([FromForm] IFormFile file)
         {
@@ -486,7 +486,7 @@ namespace ComandeRestAPI.Controllers
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
             process.Start();
-        }
+        }*/
 
         [HttpPost("updatePrenotazione")] // usata app Gestore
         public async Task<IActionResult> updatePrenotazione([FromBody] TavolataMini2 t)
