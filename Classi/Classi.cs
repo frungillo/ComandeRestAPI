@@ -1,5 +1,6 @@
 ﻿using CrystalDecisions.ReportAppServer.DataDefModel;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
@@ -1111,5 +1112,73 @@ namespace ComandeRestAPI.Classi
             db.Dispose();
         }
 
+    }
+
+    public class SintesiIncasso 
+    {
+        public decimal Acconto { get; set; } 
+        public decimal Sconto { get; set; }
+        public decimal Conto { get; set; }
+        public SintesiIncasso() { }
+
+        public static SintesiIncasso getSintesiIncasobyDataOra(string data, string ora) 
+        {
+            SintesiIncasso incasso = new SintesiIncasso();
+            incasso.Acconto = 0;
+            incasso.Conto = 0;
+            incasso.Sconto = 0;
+            string sql = $@"select ISNULL(SUM(acconto), 0) AS ACCONTO,
+                                   ISNULL(SUM(sconto),  0) AS SCONTO,
+                                   ISNULL(SUM(conto),   0) AS CONTO
+                                   from tavolata where data_ora_arrivo=convert(datetime, '{data} {ora}',103)
+                            ";
+
+            db db = new db();
+
+            SqlDataReader r = db.getReader(sql);
+            if (r.HasRows) 
+            {
+                r.Read();
+                incasso.Acconto = r.GetDecimal(0);
+                incasso.Sconto = r.GetDecimal(1);
+                incasso.Conto = r.GetDecimal(2);
+            }
+            db.Dispose();
+            return incasso;
+        }
+
+    }
+
+    public class SintesiTipoIncasso
+    {
+        public decimal Contanti { get; set; }
+        public decimal Pos { get; set; }
+
+        public SintesiTipoIncasso() { }
+
+        public static SintesiTipoIncasso getSintetesiTipoIncassobyDataOra(string data, string ora)
+        {
+            SintesiTipoIncasso incasso = new SintesiTipoIncasso();
+            incasso.Contanti = 0;
+            incasso.Pos = 0;
+           
+            string sql = $@"select ISNULL(sum(conto_contanti),0) as CONTANTI, ISNULL(sum(conto_pos),0) as POS from pagamenti
+                            where (pagamenti.tipo=1  or pagamenti.tipo=5)
+                            and id_tavolata in (select id_tavolata from tavolata where data_ora_arrivo=convert(datetime, '{data} {ora}',103))
+                            ";
+
+            db db = new db();
+
+            SqlDataReader r = db.getReader(sql);
+            if (r.HasRows)
+            {
+                r.Read();
+                incasso.Contanti = r.GetDecimal(0);
+                incasso.Pos = r.GetDecimal(1);
+               
+            }
+            db.Dispose();
+            return incasso;
+        }
     }
 }

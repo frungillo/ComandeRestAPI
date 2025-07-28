@@ -236,6 +236,19 @@ namespace ComandeRestAPI.Controllers
             _conn.Close();
             return Ok(incasso);
         }
+
+        [HttpGet("getTotaleIncassoDataOra")]  // usata app Gestore - inserita il 28/07/2025
+        public ActionResult<SintesiIncasso> getTotaleIncassoDataOra(string data, string ora) 
+        {
+            return SintesiIncasso.getSintesiIncasobyDataOra(data, ora);
+        }
+
+        [HttpGet("getTotaleTipoIncassoDataOra")]  // usata app Gestore - inserita il 28/07/2025
+        public ActionResult<SintesiTipoIncasso> getTotaleTipoIncassoDataOra(string data, string ora)
+        {
+            return SintesiTipoIncasso.getSintetesiTipoIncassobyDataOra(data, ora);
+        }
+
         [HttpGet("getTotaleIncassato")]
         public ActionResult<float> GetTotaleIncassato(string data)
         {
@@ -1111,10 +1124,7 @@ namespace ComandeRestAPI.Controllers
         }
 
         /*SEZIONE RELATIVA ALLA TABELLA SPESA*/
-        /*
-         * USATA IN
-         * - App Gestori
-         */
+        /*USATA IN App Gestori         */
 
         [HttpGet("getSpeseALL")] // usata app Gestore
         public ActionResult<IEnumerable<Spesa>> getSpeseALL()
