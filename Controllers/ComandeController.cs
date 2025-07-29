@@ -238,15 +238,22 @@ namespace ComandeRestAPI.Controllers
         }
 
         [HttpGet("getTotaleIncassoDataOra")]  // usata app Gestore - inserita il 28/07/2025
-        public ActionResult<SintesiIncasso> getTotaleIncassoDataOra(string data, string ora) 
+        public ActionResult<List<SintesiIncasso>> getTotaleIncassoDataOra(string data) 
         {
-            return SintesiIncasso.getSintesiIncasobyDataOra(data, ora);
+            List<SintesiIncasso> list = new List<SintesiIncasso>();
+            list.Add(SintesiIncasso.getSintesiIncasobyDataOra(data,"12:00"));
+            list.Add(SintesiIncasso.getSintesiIncasobyDataOra(data, "19:00"));
+            return list;
         }
 
         [HttpGet("getTotaleTipoIncassoDataOra")]  // usata app Gestore - inserita il 28/07/2025
-        public ActionResult<SintesiTipoIncasso> getTotaleTipoIncassoDataOra(string data, string ora)
+        public ActionResult<List<SintesiTipoIncasso>> getTotaleTipoIncassoDataOra(string data)
         {
-            return SintesiTipoIncasso.getSintetesiTipoIncassobyDataOra(data, ora);
+            List<SintesiTipoIncasso> list = new List<SintesiTipoIncasso>();
+            list.Add(SintesiTipoIncasso.getSintetesiTipoIncassobyDataOra(data, "12:00"));
+            list.Add(SintesiTipoIncasso.getSintetesiTipoIncassobyDataOra(data, "19:00"));
+
+            return list;
         }
 
         [HttpGet("getTotaleIncassato")]
