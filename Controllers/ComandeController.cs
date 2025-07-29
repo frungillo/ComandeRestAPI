@@ -185,32 +185,94 @@ namespace ComandeRestAPI.Controllers
                 if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
                 string data2 = DateTime.Parse(data).ToShortDateString();
                 string sql = $@"
-                    select DATA_ORA=extra.data,  DESCRIZIONE1='SENZA TAVOLO', DESCRIZIONE2=pietanze.descrizione,extra.prezzo, extra.quantita, ACCONTO=0, SCONTO=0,TOTALE=extra.prezzo*extra.quantita
-                    from extra 
-                    inner join pietanze on extra.id_pietanza=pietanze.id_pietanza 
-                    where (extra.data BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103)))
-                    union 
-                    select DATA_ORA=tavolata.data_ora_arrivo,  DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2=pietanze.descrizione, pietanze.prezzo, ordini.quantita,ACCONTO=0, SCONTO=0, TOTALE=ordini.quantita*pietanze.prezzo
-                    from tavolata 
-                    join ordini on tavolata.id_tavolata=ordini.id_tavolata 
-                    join pietanze on pietanze.id_pietanza=ordini.id_pietanza 
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (tavolata.stato = 3 or tavolata.stato = 4)
-                    union
-                    select DATA_ORA=tavolata.data_ora_arrivo, DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2=menu.descrizione, menu.prezzo,ordini.quantita,ACCONTO=0, SCONTO=0, TOTALE=ordini.quantita*menu.prezzo
-                    from tavolata 
-                    join ordini on tavolata.id_tavolata=ordini.id_tavolata 
-                    join menu on menu.id_menu=ordini.id_menu 
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (tavolata.stato = 3 or tavolata.stato = 4)
-                    union 
-                    select DATA_ORA=tavolata.data_ora_arrivo, DESCRIZIONE1='Tavolo '+tavolata.descrizione,DESCRIZIONE2=prestazioni_extra.descrizione, prestazioni_extra.prezzo, quantita=1, ACCONTO=0, SCONTO=0,TOTALE=prestazioni_extra.prezzo
-                    from tavolata 
-                    join prestazioni_extra on prestazioni_extra.idTavolata=tavolata.id_tavolata
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (tavolata.stato = 3 or tavolata.stato = 4)
-                    union 
-                    select DATA_ORA=tavolata.data_ora_arrivo,DESCRIZIONE1='Tavolo '+tavolata.descrizione, DESCRIZIONE2='ACCONTO & SCONTO',  prezzo=0,quantita=1,ACCONTO=tavolata.acconto,SCONTO=tavolata.sconto,TOTALE=0
-                    from tavolata 
-                    where (tavolata.data_ora_arrivo BETWEEN convert(datetime, '{data2} 09:00' , 103) and dateadd(day,1,convert(datetime, '{data2} 04:00' , 103))) and (acconto <> 0 or sconto <> 0)
-                    order by DATA_ORA";
+                                DECLARE @inizio DATETIME = CONVERT(DATETIME, '{data2} 09:00', 103);
+                                DECLARE @fine   DATETIME = DATEADD(DAY, 1, CONVERT(DATETIME, '{data2} 04:00', 103));
+
+                                -- EXTRA SENZA TAVOLO
+                                SELECT 
+                                    DATA_ORA     = extra.data,
+                                    DESCRIZIONE1 = 'SENZA TAVOLO',
+                                    DESCRIZIONE2 = pietanze.descrizione,
+                                    prezzo       = extra.prezzo,
+                                    quantita     = extra.quantita,
+                                    ACCONTO      = 0,
+                                    SCONTO       = 0,
+                                    TOTALE       = extra.prezzo * extra.quantita
+                                FROM extra
+                                JOIN pietanze ON extra.id_pietanza = pietanze.id_pietanza
+                                WHERE extra.data BETWEEN @inizio AND @fine
+
+                                UNION ALL
+
+                                -- ORDINI CON PIETANZE
+                                SELECT 
+                                    DATA_ORA     = tavolata.data_ora_arrivo,
+                                    DESCRIZIONE1 = 'Tavolo ' + tavolata.descrizione,
+                                    DESCRIZIONE2 = pietanze.descrizione,
+                                    prezzo       = pietanze.prezzo,
+                                    quantita     = ordini.quantita,
+                                    ACCONTO      = 0,
+                                    SCONTO       = 0,
+                                    TOTALE       = ordini.quantita * pietanze.prezzo
+                                FROM tavolata
+                                JOIN ordini ON tavolata.id_tavolata = ordini.id_tavolata
+                                JOIN pietanze ON ordini.id_pietanza = pietanze.id_pietanza
+                                WHERE tavolata.data_ora_arrivo BETWEEN @inizio AND @fine
+                                  AND tavolata.stato IN (3, 4)
+
+                                UNION ALL
+
+                                -- ORDINI CON MENU
+                                SELECT 
+                                    DATA_ORA     = tavolata.data_ora_arrivo,
+                                    DESCRIZIONE1 = 'Tavolo ' + tavolata.descrizione,
+                                    DESCRIZIONE2 = menu.descrizione,
+                                    prezzo       = menu.prezzo,
+                                    quantita     = ordini.quantita,
+                                    ACCONTO      = 0,
+                                    SCONTO       = 0,
+                                    TOTALE       = ordini.quantita * menu.prezzo
+                                FROM tavolata
+                                JOIN ordini ON tavolata.id_tavolata = ordini.id_tavolata
+                                JOIN menu ON ordini.id_menu = menu.id_menu
+                                WHERE tavolata.data_ora_arrivo BETWEEN @inizio AND @fine
+                                  AND tavolata.stato IN (3, 4)
+
+                                UNION ALL
+
+                                -- EXTRA CON TAVOLO
+                                SELECT 
+                                    DATA_ORA     = tavolata.data_ora_arrivo,
+                                    DESCRIZIONE1 = 'Tavolo ' + tavolata.descrizione,
+                                    DESCRIZIONE2 = prestazioni_extra.descrizione,
+                                    prezzo       = prestazioni_extra.prezzo,
+                                    quantita     = 1,
+                                    ACCONTO      = 0,
+                                    SCONTO       = 0,
+                                    TOTALE       = prestazioni_extra.prezzo
+                                FROM tavolata
+                                JOIN prestazioni_extra ON prestazioni_extra.idTavolata = tavolata.id_tavolata
+                                WHERE tavolata.data_ora_arrivo BETWEEN @inizio AND @fine
+                                  AND tavolata.stato IN (3, 4)
+
+                                UNION ALL
+
+                                -- ACCONTO & SCONTO
+                                SELECT 
+                                    DATA_ORA     = tavolata.data_ora_arrivo,
+                                    DESCRIZIONE1 = 'Tavolo ' + tavolata.descrizione,
+                                    DESCRIZIONE2 = 'ACCONTO & SCONTO',
+                                    prezzo       = 0,
+                                    quantita     = 1,
+                                    ACCONTO      = tavolata.acconto,
+                                    SCONTO       = tavolata.sconto,
+                                    TOTALE       = 0
+                                FROM tavolata
+                                WHERE tavolata.data_ora_arrivo BETWEEN @inizio AND @fine
+                                  AND (tavolata.acconto <> 0 OR tavolata.sconto <> 0)
+
+                                ORDER BY DATA_ORA;
+                                ";
                 SqlCommand comm = new SqlCommand(sql, _conn);
                 SqlDataReader myReader = comm.ExecuteReader();
                 while (myReader.Read())
