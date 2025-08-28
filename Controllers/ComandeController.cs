@@ -42,7 +42,46 @@ namespace ComandeRestAPI.Controllers
             _env = env;
             _conn = conn ?? new SqlConnection(db.connStr());
         }
-   
+
+
+        // blocco di codice relativo alla tabella Pagamenti -- Usata app Gestore inseriti il 28/08/2025
+
+        [HttpPost("insertPagamento")]
+        public IActionResult InsertPagamento([FromBody] Pagamenti pa)
+        {
+            if (pa == null)
+                return BadRequest("Pagamento non valido");
+
+            Pagamenti.insert(pa);
+            return Ok();
+        }
+
+        [HttpPut("updatePagamento")]
+        public IActionResult UpdatePagamento([FromBody] Pagamenti pa)
+        {
+            if (pa == null)
+                return BadRequest("Pagamento non valido");
+
+            Pagamenti.update(pa);
+            return Ok();
+        }
+
+        [HttpDelete("deletePagamento/{id_pagamento}")]
+        public IActionResult DeletePagamento(int id_pagamento)
+        {
+            Pagamenti.delete(id_pagamento);
+            return Ok();
+        }
+
+        [HttpGet("getSpeseFiltro")]
+        public ActionResult<IEnumerable<Pagamenti>> GetSpeseFiltro([FromQuery] string filtro)
+        {
+            var list = Pagamenti.getSpeseFiltro(filtro);
+            return Ok(list);
+        }
+
+        // fine blocco di codice relativo alla tabella Pagamenti
+
         [HttpGet("getPietanza")]
         public ActionResult<Pietanza> GetPietanza(string Id_pietanza)
         {
@@ -401,7 +440,7 @@ namespace ComandeRestAPI.Controllers
         [HttpPost("insertTavolata")]
         public IActionResult insertTavolata([FromBody] Tavolata ta)
         {
-            
+         
             
             string sql = @$"insert into tavolata (
                                                 convert(date,{DateTime.Now},
@@ -427,6 +466,7 @@ namespace ComandeRestAPI.Controllers
             return Ok();
 
         }
+       
         [HttpPost("creaTavolata")]
         public IActionResult creaTavolata([FromBody] TavolataMini t)
         {

@@ -42,9 +42,9 @@ namespace ComandeRestAPI.Classi
                 _data_ora_registrazione = r.GetDateTime(1);
                 _id_tavolata = (int)r[2];
                 _tipo = (int)r[3];
-                try { _conto_pos = r.GetDouble(4); } catch { _conto_pos = 0; }
-                try { _conto_contanti = r.GetDouble(5); } catch { _conto_contanti = 0; }
-                try { _conto_altro = r.GetDouble(6); } catch { _conto_altro = 0; }
+                try { _conto_pos = (double)r.GetDecimal(4); } catch { _conto_pos = 0; }
+                try { _conto_contanti = (double)r.GetDecimal(5); } catch { _conto_contanti = 0; }
+                try { _conto_altro = (double)r.GetDecimal(6); } catch { _conto_altro = 0; }
                 _note = r[7].ToString();
             }
             else
@@ -109,6 +109,36 @@ namespace ComandeRestAPI.Classi
             {
                 throw new Exception("Errore Salvataggio Pagamento:" + ex.Message);
             }
+        }
+        public static void delete(int id)
+        {
+            db db = new db();
+            string sql = $"delete from pagamenti where id_pagamento={id}";
+            try
+            {
+                db.exe(sql);
+                db.CloseReader();
+                db.Dispose();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Errore Cancellazione Pagamento:" + ex.Message);
+            }
+        }
+        public static List<Pagamenti> getSpeseFiltro(string filtro)
+        {
+            db db = new db();
+            string sql = $@"select id_pagamento from pagamenti where {filtro} ";
+            List<Pagamenti> lst = new List<Pagamenti>();
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                int c = (int)r[0];
+                Pagamenti p = new Pagamenti(c);
+                lst.Add(p);
+            }
+            db.Dispose();
+            return lst;
         }
     }
 }
