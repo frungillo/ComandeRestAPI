@@ -101,14 +101,14 @@ namespace ComandeRestAPI.Classi
             try
             {
                 db.exe(sql);
-                db.CloseReader();
-                db.Dispose();
+                
 
             }
             catch (Exception ex)
             {
                 throw new Exception("Errore Salvataggio Pagamento:" + ex.Message);
             }
+            db.Dispose();
         }
         public static void delete(int id)
         {
@@ -117,13 +117,13 @@ namespace ComandeRestAPI.Classi
             try
             {
                 db.exe(sql);
-                db.CloseReader();
-                db.Dispose();
+                
             }
             catch (Exception ex)
             {
                 throw new Exception("Errore Cancellazione Pagamento:" + ex.Message);
             }
+            db.Dispose();
         }
         public static List<Pagamenti> getSpeseFiltro(string filtro)
         {

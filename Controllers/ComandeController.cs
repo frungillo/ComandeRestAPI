@@ -53,7 +53,7 @@ namespace ComandeRestAPI.Controllers
                 return BadRequest("Pagamento non valido");
 
             Pagamenti.insert(pa);
-            return Ok();
+            return Ok(pa);
         }
 
         [HttpPut("updatePagamento")]
@@ -63,7 +63,7 @@ namespace ComandeRestAPI.Controllers
                 return BadRequest("Pagamento non valido");
 
             Pagamenti.update(pa);
-            return Ok();
+            return Ok(pa);
         }
 
         [HttpDelete("deletePagamento/{id_pagamento}")]
