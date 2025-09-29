@@ -80,6 +80,13 @@ namespace ComandeRestAPI.Controllers
             return Ok(list);
         }
 
+        [HttpGet("getPagamentobyId")]
+        public ActionResult<Pagamenti> getPagamentobyId(int id)
+        {
+            Pagamenti p = new Pagamenti(id);
+            return Ok(p);
+        }
+
         // fine blocco di codice relativo alla tabella Pagamenti
 
         [HttpGet("getPietanza")]
