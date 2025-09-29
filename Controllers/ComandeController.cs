@@ -556,7 +556,7 @@ namespace ComandeRestAPI.Controllers
             db db2 = new db();
             db2.exe(sql2);
             db2.Dispose();
-
+            /*
             if (acconto > 0) // devoinserire anche una registrazione in tabella Pagamenti
             {
                 Pagamenti p = new Pagamenti();
@@ -570,46 +570,10 @@ namespace ComandeRestAPI.Controllers
                 Pagamenti.insert(p);
 
             }
-            
-            return Ok();
+            */
+            return Ok(index);
         }
-      /*
-        [HttpPost("stampaScontrino")] // usata app Gestore
-        public async Task<IActionResult> StampaPDF([FromForm] IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("File mancante");
-
-            var tempPath = Path.Combine(Path.GetTempPath(), file.FileName);
-
-            using (var stream = new FileStream(tempPath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            try
-            {
-                // Chiama la funzione per stampare
-                StampaPdf(tempPath);
-                return Ok("Stampa avviata");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Errore durante la stampa: {ex.Message}");
-            }
-        }
-        public void StampaPdf(string filePath)
-        {
-            var acrobatPath = @"C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe";
-        
-            var process = new Process();
-            process.StartInfo.FileName = acrobatPath;
-            process.StartInfo.Arguments = $"/h /t \"{filePath}\" \"POS-CASSA\"";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-            process.Start();
-        }*/
-
+      
         [HttpPost("updatePrenotazione")] // usata app Gestore
         public async Task<IActionResult> updatePrenotazione([FromBody] TavolataMini2 t)
         {
@@ -650,6 +614,47 @@ namespace ComandeRestAPI.Controllers
             db db2 = new db();
             db2.exe(sql2);
             db2.Dispose();
+
+            // controllo se c'è acconto e se c'è lo registro in tabella Pagamenti o lo aggiorno
+            string sql3 = $@"select * from pagamenti where id_tavolata={t.Id_tavolata} and tipo=2";
+            db db3 = new db();
+            SqlDataReader r = db3.getReader(sql3);
+            Pagamenti p = new Pagamenti();
+            if (r.HasRows) // c'è gia un acconto lo aggiorno
+            {
+                r.Read();
+                p.Id_pagamento = int.Parse(r[0].ToString());
+                p.Id_tavolata = int.Parse(r[2].ToString());
+                p.Data_ora_registrazione = DateTime.Parse(r[1].ToString());
+                p.Tipo = int.Parse(r[3].ToString());
+                p.Conto_pos = float.Parse(r[4].ToString());
+                p.Conto_contanti = float.Parse(r[5].ToString());
+                p.Conto_altro = float.Parse(r[6].ToString());
+                p.Note = r[7].ToString();
+                if (t.Acconto > 0) // aggiorno
+                {
+                    p.Conto_contanti = (float)t.Acconto; // diamo per default che l'acconto sia in contanti.....
+                    Pagamenti.update(p);
+                }
+                else // elimino l'acconto
+                {
+                    Pagamenti.delete(p.Id_pagamento);
+                }
+            }
+            else // non c'è acconto lo inserisco
+            {
+                if (t.Acconto > 0)
+                {
+                    p.Id_tavolata = t.Id_tavolata;
+                    p.Data_ora_registrazione = DateTime.Now;
+                    p.Conto_contanti = (float)t.Acconto; // diamo per default che l'acconto sia in contanti.....
+                    p.Tipo = 2;
+                    p.Conto_altro = 0;
+                    p.Conto_pos = 0;
+                    p.Note = "Registrazione di Acconto da App Gestori";
+                    Pagamenti.insert(p);
+                }
+            }
             return Ok();
         }
         [HttpGet("getTavoliConto")]
