@@ -621,7 +621,8 @@ namespace ComandeRestAPI.Controllers
             db db2 = new db();
             db2.exe(sql2);
             db2.Dispose();
-
+            /*
+            //DA ELIMINARE PERCHE' ORA GESTITO DALL'APP GESTORE
             // controllo se c'è acconto e se c'è lo registro in tabella Pagamenti o lo aggiorno
             string sql3 = $@"select * from pagamenti where id_tavolata={t.Id_tavolata} and tipo=2";
             db db3 = new db();
@@ -662,6 +663,7 @@ namespace ComandeRestAPI.Controllers
                     Pagamenti.insert(p);
                 }
             }
+            */
             return Ok();
         }
         [HttpGet("getTavoliConto")]
