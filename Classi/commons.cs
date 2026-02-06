@@ -37,6 +37,7 @@ namespace ComandeRestAPI.Classi
 
             }
             db.Dispose();
+            if (chiave=="ora_arrivo_cena") valore=valore.Substring(0, 2); // prendo solo l'ora, non mi serve il minuto
             return valore;
         }
     }

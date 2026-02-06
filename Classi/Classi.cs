@@ -358,22 +358,38 @@ namespace ComandeRestAPI.Classi
             List<Tavolata> t = new List<Tavolata>();
             // string endora = "";
             string ora = "";
-            int ora_fine_pranzo = 18;
-            try { ora_fine_pranzo = Convert.ToInt32(commons.recuperoParametri("ora_fine_pranzo")); } catch { }
-            if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < ora_fine_pranzo) ora = "12:00"; else ora = "19:00";
-            /*
-            if (ora == "12:00") endora = $"convert(datetime, '{DateTime.Now.ToShortDateString()} 18:30' , 103)";
-                else endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
-            if (DateTime.Now.Hour >= 0 && DateTime.Now.Hour < 6)
-                endora = $"dateadd(day, 1, convert(datetime, '{DateTime.Now.ToShortDateString()} 04:00', 103))";
-                */
-            string sqlOra12 = $" and Datepart(HOUR, data_ora_arrivo) =12";
-            string sqlOra19 = $" and Datepart(HOUR, data_ora_arrivo) =19";
-            db db = new db(); //SYSDATETIME()
-            string sql = $@"SELECT * from tavolata where  GETDATE() between DATEADD(hour,-9, data_ora_arrivo) and DATEADD(hour,9, data_ora_arrivo)";
+            int oraFinePranzo = 18;
+            int oraInizioCena = 19;
 
-            if (ora.Contains("12")) sql += sqlOra12; else sql += sqlOra19;
-            sql += "  order by descrizione";
+            try { oraFinePranzo = Convert.ToInt32(commons.recuperoParametri("ora_fine_pranzo")); } catch { }
+            try { oraInizioCena = Convert.ToInt32(commons.recuperoParametri("ora_arrivo_cena")); } catch { }
+
+            int oraCorrente = DateTime.Now.Hour;
+            int? oraTarget = null;
+
+            // LOGICA BUSINESS
+            if (oraCorrente >= 10 && oraCorrente < oraFinePranzo)
+            {
+                oraTarget = 12;   // pranzo
+            }
+            else if (oraCorrente >= oraInizioCena)
+            {
+                oraTarget = 19;   // cena
+            }
+            else
+            {
+                oraTarget = 19; // fuori fascia → sempre ecena
+            }
+
+            db db = new db();
+            string sql = $@"
+                        SELECT *
+                        FROM tavolata
+                        WHERE
+                            CAST(data_ora_arrivo AS DATE) = CAST(GETDATE() AS DATE)
+                            AND DATEPART(HOUR, data_ora_arrivo) = '{oraTarget}'
+                        ORDER BY descrizione";
+
             SqlDataReader r = db.getReader(sql);
             while (r.Read())
             {
