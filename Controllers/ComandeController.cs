@@ -434,7 +434,7 @@ namespace ComandeRestAPI.Controllers
                             adulti={ta.Adulti},
                             bambini={ta.Bambini},
                             id_sala={ta.IdSala},
-                            descrizione='{ta.Descrizione}',
+                            descrizione='{ta.Descrizione.Replace("'", "''")}',
                             note='{ta.Note}',
                             numero_tavolo={ta.NumeroTavolo}
                             where id_tavolata={id_tavolata}";
@@ -1203,8 +1203,8 @@ namespace ComandeRestAPI.Controllers
             if (id_cliente=="NON TROVATO") 
             {
                 Cliente cliente = new Cliente();
-                cliente.Nome = nome.ToUpper();
-                cliente.Cognome = cognome.ToUpper();
+                cliente.Nome = nome.ToUpper().Replace("'", "''");
+                cliente.Cognome = cognome.ToUpper().Replace("'", "''");
                 cliente.Telefono = telefono;
                 cliente.Attivo = 1;
                 cliente.Data_reg = DateTime.Now;
