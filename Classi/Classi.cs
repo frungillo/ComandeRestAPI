@@ -390,7 +390,7 @@ namespace ComandeRestAPI.Classi
             }
             else
             {
-                oraTarget = 10; // fuori fascia → orario non utilizzato per non mostrare nulla
+                oraTarget = 9; // fuori fascia → orario non utilizzato per non mostrare nulla
             }
 
             db db = new db();
