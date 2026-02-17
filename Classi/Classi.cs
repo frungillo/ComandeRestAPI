@@ -360,14 +360,26 @@ namespace ComandeRestAPI.Classi
             string ora = "";
             int oraFinePranzo = 18;
             int oraInizioCena = 19;
+            int sogliaNotturna = 3; // fino alle 03 considero ancora la cena precedente
 
             try { oraFinePranzo = Convert.ToInt32(commons.recuperoParametri("ora_fine_pranzo")); } catch { }
             try { oraInizioCena = Convert.ToInt32(commons.recuperoParametri("ora_arrivo_cena")); } catch { }
+            try { sogliaNotturna = Convert.ToInt32(commons.recuperoParametri("ora_fine_cena")); } catch { }
 
+            DateTime now = DateTime.Now;
             int oraCorrente = DateTime.Now.Hour;
             int? oraTarget = null;
+            DateTime dataTarget = now.Date;
 
             // LOGICA BUSINESS
+            // FASCIA NOTTURNA → cena giorno precedente
+            if (oraCorrente < sogliaNotturna)
+            {
+                oraTarget = 19;
+                dataTarget = now.Date.AddDays(-1);
+            }
+            // PRANZO
+            else
             if (oraCorrente >= 10 && oraCorrente < oraFinePranzo)
             {
                 oraTarget = 12;   // pranzo
@@ -378,15 +390,14 @@ namespace ComandeRestAPI.Classi
             }
             else
             {
-                oraTarget = 19; // fuori fascia → sempre ecena
+                oraTarget = 9; // fuori fascia → orario non utilizzato per non mostrare nulla
             }
 
             db db = new db();
             string sql = $@"
                         SELECT *
                         FROM tavolata
-                        WHERE
-                            CAST(data_ora_arrivo AS DATE) = CAST(GETDATE() AS DATE)
+                        WHERE convert(date,data_ora_arrivo,103)=convert(date,'{dataTarget}',103)
                             AND DATEPART(HOUR, data_ora_arrivo) = '{oraTarget}'
                         ORDER BY descrizione";
 
