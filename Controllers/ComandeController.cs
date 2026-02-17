@@ -802,7 +802,8 @@ namespace ComandeRestAPI.Controllers
             List<TipiPietanze> list = new List<TipiPietanze>();
 
             db db = new db();
-            string sql = $@" select * from tipi_pietanze where (select count(*) from pietanze where attivo=1 and pietanze.id_tipo = tipi_pietanze.id_tipo) >= 1 order by descrizione";
+            //evito di beccare le pietanze di variazioni che non sono pietanze vere e proprie e che non devono essere mostrate nell'app
+            string sql = $@" select * from tipi_pietanze where (select count(*) from pietanze where attivo=1 and pietanze.id_tipo = tipi_pietanze.id_tipo) >= 1 and descrizione <> 'VARIAZIONI' order by descrizione";
             SqlDataReader r = db.getReader(sql);
           
             while (r.Read())
@@ -824,13 +825,36 @@ namespace ComandeRestAPI.Controllers
                 Pietanza p = new Pietanza(r[0].ToString());
                 lst.Add(p);
             }
+            db.Dispose();
             return Ok(lst);
         }
+
+        [HttpGet("getVariazioni")]
+        public ActionResult<IEnumerable<Pietanza>> GetVariazioni()
+        {
+            List<Pietanza> lst = new List<Pietanza>();
+            db db = new db();
+            string sql = $"select id_pietanza from pietanze where id_tipo in (select id_tipo from tipi_pietanze where descrizione='VARIAZIONI') and attivo=1 order by descrizione";
+            SqlDataReader r = db.getReader(sql);
+            while (r.Read())
+            {
+                Pietanza p = new Pietanza(r[0].ToString());
+                lst.Add(p);
+            }
+            db.Dispose();
+            return Ok(lst);
+        }
+
         [HttpGet("getOrdini")]
         public ActionResult<Ordine[]> getOrdiniByTavolata(int idTavolata)
         {
             List<Ordine> ret = new List<Ordine>();
-            string sql = "select * from ordini where id_tavolata=" + idTavolata;
+            string sql = @$"SELECT *
+                FROM ordini where id_pietanza  in 
+                    (select id_pietanza from pietanze where id_tipo in 
+                        (select id_tipo from tipi_pietanze where descrizione <> 'VARIAZIONI')
+                        ) 
+                        and id_tavolata = {idTavolata}";
             db db = new db();
             SqlDataReader r = db.getReader(sql);
             while (r.Read())
@@ -976,7 +1000,13 @@ namespace ComandeRestAPI.Controllers
         public ActionResult<Comanda[]> getComande(int id_tavolata) {
             db db = new db();
             List<Comanda> comande = new List<Comanda>();
-            string sql = "select id_comanda from comande where id_tavolata=" + id_tavolata;
+            string sql = @$"SELECT id_comanda
+                        FROM comande where id_pietanza  in 
+                            (select id_pietanza from pietanze where id_tipo in 
+                                (select id_tipo from tipi_pietanze where descrizione <> 'VARIAZIONI')
+                                ) 
+                                and id_tavolata = {id_tavolata}
+                        ";
             SqlDataReader r = db.getReader(sql);
             while (r.Read())
             {
