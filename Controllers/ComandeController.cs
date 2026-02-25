@@ -850,11 +850,12 @@ namespace ComandeRestAPI.Controllers
         {
             List<Ordine> ret = new List<Ordine>();
             string sql = @$"SELECT *
-                FROM ordini where id_pietanza  in 
+                FROM ordini where 
+                (id_pietanza  in 
                     (select id_pietanza from pietanze where id_tipo in 
-                        (select id_tipo from tipi_pietanze where descrizione <> 'VARIAZIONI')
-                        ) 
-                        and id_tavolata = {idTavolata}";
+                        (select id_tipo from tipi_pietanze where descrizione <> 'VARIAZIONI') 
+                        ) or id_pietanza is null )
+                        and id_tavolata ={idTavolata}";
             db db = new db();
             SqlDataReader r = db.getReader(sql);
             while (r.Read())
