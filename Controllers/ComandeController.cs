@@ -1,27 +1,33 @@
 ﻿using ComandeRestAPI.Classi;
+using CrystalDecisions.CrystalReports.Engine;
+using CrystalDecisions.ReportAppServer.CommonControls;
+using iText.IO.Font.Constants;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
-using CrystalDecisions.CrystalReports.Engine;
 using System.Net.Http;
-
-using static ComandeRestAPI.Classi.ClassiStampa;
-using Newtonsoft.Json;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml.Serialization;
-using CrystalDecisions.ReportAppServer.CommonControls;
-using System.Reflection;
+using static ComandeRestAPI.Classi.ClassiStampa;
 
 namespace ComandeRestAPI.Controllers
 {
-   
-    
+      
 
 
     [Route("api/[controller]")]
@@ -1380,6 +1386,114 @@ namespace ComandeRestAPI.Controllers
             catch
             {
                 return Ok(false);
+            }
+        }
+      
+        [HttpGet("createPDF")]// usata app Gestore
+        public IActionResult createPDF(string data1,string data2, string pasto1, string pasto2, int id_utente)
+        {
+            try
+            {
+                // -------------------------
+                // Totali incassi
+                // -------------------------
+
+                double incassoCo = Pagamenti.getContantiByDataOraTavolata(data1, pasto1, data2, pasto2);
+                double incassoPo = Pagamenti.getPOSByDataOraTavolata(data1, pasto1, data2, pasto2);
+
+                double accontoCo = Pagamenti.getAccontoContantiByDataOraTavolata(data1, pasto1, data2, pasto2);
+                double accontoPo = Pagamenti.getAccontoPOSByDataOraTavolata(data1, pasto1, data2, data2);
+
+                string filtro = $"convert(datetime,data_ora_registrazione,103) between convert(datetime,'{data1} {pasto1}',103) and convert(datetime,'{data2} {pasto2}',103) and tipo>=60 and tipo<=70 order by data_ora_registrazione asc";
+
+
+                var spese = Pagamenti.getSpeseFiltro(filtro);
+
+                // -------------------------
+                // Calcolo totali spese
+                // -------------------------
+
+                double speseCo = 0;
+                double spesePo = 0;
+
+                foreach (var s in spese)
+                {
+                    speseCo += s.Conto_contanti;
+                    spesePo += s.Conto_pos;
+                }
+
+                double diffCo = incassoCo - speseCo;
+                double diffPo = incassoPo - spesePo;
+
+                // -------------------------
+                // Creazione PDF
+                // -------------------------
+                PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+                PdfFont fontBold = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
+
+                using MemoryStream ms = new MemoryStream();
+
+                PdfWriter writer = new PdfWriter(ms);
+                PdfDocument pdf = new PdfDocument(writer);
+                Document document = new Document(pdf);
+
+    
+                document.Add(new Paragraph("RIEPILOGO CONTABILE")
+                    .SetFont(font)
+                    .SetFontSize(18));
+
+                document.Add(new Paragraph($"Periodo: {data1} {pasto1} - {data2} {pasto2}"));
+
+                document.Add(new Paragraph(" "));
+
+                // cultura italiana per formato €
+                CultureInfo it = new CultureInfo("it-IT");
+
+                // -------------------------
+                // Tabella
+                // -------------------------
+
+                iText.Layout.Element.Table table = new iText.Layout.Element.Table(3);
+
+                // Header
+                table.AddHeaderCell(new Cell().Add(new Paragraph("Voce").SetFont(fontBold)));
+                table.AddHeaderCell(new Cell().Add(new Paragraph("Contanti").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
+                table.AddHeaderCell(new Cell().Add(new Paragraph("POS").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
+
+                // Incasso
+                table.AddCell("Incasso");
+                table.AddCell(new Cell().Add(new Paragraph(incassoCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(incassoPo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+
+                // Acconti
+                table.AddCell("Acconti");
+                table.AddCell(new Cell().Add(new Paragraph(accontoCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(accontoPo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+
+                // Spese
+                table.AddCell("Spese");
+                table.AddCell(new Cell().Add(new Paragraph(speseCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(spesePo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+
+                // Differenza
+                table.AddCell("Differenza");
+                table.AddCell(new Cell().Add(new Paragraph(diffCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(diffPo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+
+                document.Add(table);
+                Operatori o = new Operatori(id_utente);
+
+                document.Add(new Paragraph($"Generato da: {o.Nominativo}"));
+
+                document.Close();
+
+                byte[] bytes = ms.ToArray();
+
+                return File(bytes, "application/pdf", "contabile.pdf");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }

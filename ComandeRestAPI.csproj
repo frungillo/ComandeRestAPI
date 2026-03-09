@@ -17,6 +17,10 @@
 
   <ItemGroup>
     <PackageReference Include="CrystalReports.Engine" Version="13.0.4003" />
+    <PackageReference Include="itext" Version="9.5.0" />
+    <PackageReference Include="itext.bouncy-castle-adapter" Version="9.5.0" />
+    <PackageReference Include="itext.commons" Version="9.5.0" />
+    <PackageReference Include="itext7" Version="9.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />

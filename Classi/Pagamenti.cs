@@ -140,5 +140,83 @@ namespace ComandeRestAPI.Classi
             db.Dispose();
             return lst;
         }
+        public static double getPOSByDataOraTavolata(string data1, string ora1, string data2, string ora2)
+        {
+            db db = new db();
+            double c = 0;
+            string sql = $@"SELECT 
+                               SUM(p.conto_pos) 
+                            FROM pagamenti p
+                            where id_tavolata in (select id_tavolata from tavolata where convert(datetime,data_ora_arrivo,103) between CONVERT(datetime, '{data1} {ora1}', 103) and CONVERT(datetime, '{data2} {ora2}', 103))";
+            SqlDataReader r = db.getReader(sql);
+            if (r.HasRows)
+            {
+                r.Read();
+                try { c = Convert.ToDouble(r[0]); } catch { }
+                db.Dispose();
+                return c;
+            }
+            return 0;
+        }
+        public static double getContantiByDataOraTavolata(string data1, string ora1, string data2, string ora2)
+        {
+            db db = new db();
+            double c = 0;
+            string sql = $@"SELECT 
+                               SUM(p.conto_contanti)
+                            FROM pagamenti p
+                            where id_tavolata in (select id_tavolata from tavolata where convert(datetime,data_ora_arrivo,103) between CONVERT(datetime, '{data1} {ora1}', 103) and CONVERT(datetime, '{data2} {ora2}', 103))";
+            SqlDataReader r = db.getReader(sql);
+            if (r.HasRows)
+            {
+                r.Read();
+                try { c = Convert.ToDouble(r[0]); } catch { }
+                db.Dispose();
+                return c;
+            }
+            return 0;
+
+        }
+        public static double getAccontoPOSByDataOraTavolata(string data1, string ora1, string data2, string ora2)
+        {
+            db db = new db();
+            double c = 0;
+            string sql = $@"SELECT 
+                               SUM(p.conto_pos) 
+                            FROM pagamenti p
+                            where id_tavolata in (select id_tavolata from tavolata where convert(datetime,data_ora_arrivo,103) between CONVERT(datetime, '{data1} {ora1}', 103) and CONVERT(datetime, '{data2} {ora2}', 103))
+                            and p.tipo=2";
+            SqlDataReader r = db.getReader(sql);
+            if (r.HasRows)
+            {
+                r.Read();
+                try { c = Convert.ToDouble(r[0]); } catch { }
+                db.Dispose();
+                return c;
+            }
+            return 0;
+        }
+        public static double getAccontoContantiByDataOraTavolata(string data1, string ora1, string data2, string ora2)
+        {
+            db db = new db();
+            double c = 0;
+            string sql = $@"SELECT 
+                               SUM(p.conto_contanti)
+                            FROM pagamenti p
+                            where id_tavolata in (select id_tavolata from tavolata where convert(datetime,data_ora_arrivo,103) between CONVERT(datetime, '{data1} {ora1}', 103) and CONVERT(datetime, '{data2} {ora2}', 103))
+                            and p.tipo=2";
+            SqlDataReader r = db.getReader(sql);
+            if (r.HasRows)
+            {
+                r.Read();
+                try { c = Convert.ToDouble(r[0]); } catch { }
+                db.Dispose();
+                return c;
+            }
+            return 0;
+
+        }
+       
+
     }
 }
