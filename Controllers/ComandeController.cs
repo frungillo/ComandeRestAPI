@@ -1401,9 +1401,11 @@ namespace ComandeRestAPI.Controllers
 
                 double incassoCo = Pagamenti.getContantiByDataOraTavolata(data1, pasto1, data2, pasto2);
                 double incassoPo = Pagamenti.getPOSByDataOraTavolata(data1, pasto1, data2, pasto2);
+                double totaleIncasso = incassoCo + incassoPo;
 
                 double accontoCo = Pagamenti.getAccontoContantiByDataOraTavolata(data1, pasto1, data2, pasto2);
                 double accontoPo = Pagamenti.getAccontoPOSByDataOraTavolata(data1, pasto1, data2, data2);
+                double totaleAcconto = accontoCo + accontoPo;
 
                 string filtro = $"convert(datetime,data_ora_registrazione,103) between convert(datetime,'{data1} {pasto1}',103) and convert(datetime,'{data2} {pasto2}',103) and tipo>=60 and tipo<=70 order by data_ora_registrazione asc";
 
@@ -1422,9 +1424,11 @@ namespace ComandeRestAPI.Controllers
                     speseCo += s.Conto_contanti;
                     spesePo += s.Conto_pos;
                 }
+                double totaleSpese = speseCo + spesePo;
 
                 double diffCo = incassoCo - speseCo;
                 double diffPo = incassoPo - spesePo;
+                double totaleDiff = diffCo + diffPo;
 
                 // -------------------------
                 // Creazione PDF
@@ -1454,35 +1458,42 @@ namespace ComandeRestAPI.Controllers
                 // Tabella
                 // -------------------------
 
-                iText.Layout.Element.Table table = new iText.Layout.Element.Table(3);
+                iText.Layout.Element.Table table = new iText.Layout.Element.Table(4);
 
                 // Header
                 table.AddHeaderCell(new Cell().Add(new Paragraph("Voce").SetFont(fontBold)));
                 table.AddHeaderCell(new Cell().Add(new Paragraph("Contanti").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
                 table.AddHeaderCell(new Cell().Add(new Paragraph("POS").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
+                table.AddHeaderCell(new Cell().Add(new Paragraph("TOTALI").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
 
                 // Incasso
                 table.AddCell("Incasso");
                 table.AddCell(new Cell().Add(new Paragraph(incassoCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
                 table.AddCell(new Cell().Add(new Paragraph(incassoPo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(totaleIncasso.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
 
                 // Acconti
                 table.AddCell("Acconti");
                 table.AddCell(new Cell().Add(new Paragraph(accontoCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
                 table.AddCell(new Cell().Add(new Paragraph(accontoPo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(totaleAcconto.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
 
                 // Spese
                 table.AddCell("Spese");
                 table.AddCell(new Cell().Add(new Paragraph(speseCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
                 table.AddCell(new Cell().Add(new Paragraph(spesePo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(totaleSpese.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
 
                 // Differenza
                 table.AddCell("Differenza");
                 table.AddCell(new Cell().Add(new Paragraph(diffCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
                 table.AddCell(new Cell().Add(new Paragraph(diffPo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph(totaleDiff.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
 
                 document.Add(table);
                 Operatori o = new Operatori(id_utente);
+                document.Add(new Paragraph(" "));
+                document.Add(new Paragraph(" "));
 
                 document.Add(new Paragraph($"Generato da: {o.Nominativo}"));
 
