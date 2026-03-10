@@ -1408,8 +1408,6 @@ namespace ComandeRestAPI.Controllers
                 double totaleAcconto = accontoCo + accontoPo;
 
                 string filtro = $"convert(datetime,data_ora_registrazione,103) between convert(datetime,'{data1} {pasto1}',103) and convert(datetime,'{data2} {pasto2}',103) and tipo>=60 and tipo<=70 order by data_ora_registrazione asc";
-
-
                 var spese = Pagamenti.getSpeseFiltro(filtro);
 
                 // -------------------------
@@ -1443,14 +1441,11 @@ namespace ComandeRestAPI.Controllers
                 Document document = new Document(pdf);
 
     
-                document.Add(new Paragraph("RIEPILOGO CONTABILE")
+                document.Add(new Paragraph($"RIEPILOGO CONTABILE- Periodo: {data1} {pasto1} - {data2} {pasto2}")
                     .SetFont(font)
-                    .SetFontSize(18));
-
-                document.Add(new Paragraph($"Periodo: {data1} {pasto1} - {data2} {pasto2}"));
-
+                    .SetFontSize(16));
                 document.Add(new Paragraph(" "));
-
+                document.Add(new Paragraph("Tabella di sintesi"));
                 // cultura italiana per formato €
                 CultureInfo it = new CultureInfo("it-IT");
 
@@ -1494,13 +1489,30 @@ namespace ComandeRestAPI.Controllers
                 Operatori o = new Operatori(id_utente);
                 document.Add(new Paragraph(" "));
                 document.Add(new Paragraph(" "));
+                document.Add(new Paragraph("Tabella distina spese"));
 
-                document.Add(new Paragraph($"Generato da: {o.Nominativo}"));
+                // aggiungo la distinta spese nel periodo
+                List<SpeseReport> speseReport = SpeseReport.getSpeseReportFiltro(filtro);
+                iText.Layout.Element.Table table2 = new iText.Layout.Element.Table(4);
 
+                // Header
+                table2.AddHeaderCell(new Cell().Add(new Paragraph("Data Ora").SetFont(fontBold)));
+                table2.AddHeaderCell(new Cell().Add(new Paragraph("Descrizione").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
+                table2.AddHeaderCell(new Cell().Add(new Paragraph("POS").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
+                table2.AddHeaderCell(new Cell().Add(new Paragraph("Contanti").SetFont(fontBold).SetTextAlignment(TextAlignment.RIGHT)));
+                foreach (var s in speseReport)
+                {
+                    table2.AddCell(new Cell().Add(new Paragraph(s.Data_ora_registrazione.ToString("dd/MM/yyyy HH:mm"))));
+                    table2.AddCell(new Cell().Add(new Paragraph(s.Note)));
+                    table2.AddCell(new Cell().Add(new Paragraph(s.Pos.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                    table2.AddCell(new Cell().Add(new Paragraph(s.Contanti.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+                }
+                document.Add(table2);
+                document.Add(new Paragraph(" "));
+                document.Add(new Paragraph($"Generato da: {o.Nominativo} - il {DateTime.Now}"));
                 document.Close();
 
                 byte[] bytes = ms.ToArray();
-
                 return File(bytes, "application/pdf", "contabile.pdf");
             }
             catch (Exception ex)
