@@ -399,7 +399,7 @@ namespace ComandeRestAPI.Classi
                         FROM tavolata
                         WHERE convert(date,data_ora_arrivo,103)=convert(date,'{dataTarget}',103)
                             AND DATEPART(HOUR, data_ora_arrivo) = '{oraTarget}'
-                        ORDER BY numero_tavolo asc";
+                        ORDER BY numero_tavolo asc, descrizione";
 
             SqlDataReader r = db.getReader(sql);
             while (r.Read())
