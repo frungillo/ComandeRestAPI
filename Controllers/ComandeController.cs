@@ -1404,7 +1404,7 @@ namespace ComandeRestAPI.Controllers
                 double totaleIncasso = incassoCo + incassoPo;
 
                 double accontoCo = Pagamenti.getAccontoContantiByDataOraTavolata(data1, pasto1, data2, pasto2);
-                double accontoPo = Pagamenti.getAccontoPOSByDataOraTavolata(data1, pasto1, data2, data2);
+                double accontoPo = Pagamenti.getAccontoPOSByDataOraTavolata(data1, pasto1, data2, pasto2);
                 double totaleAcconto = accontoCo + accontoPo;
 
                 string filtro = $"convert(datetime,data_ora_registrazione,103) between convert(datetime,'{data1} {pasto1}',103) and convert(datetime,'{data2} {pasto2}',103) and tipo>=60 and tipo<=70 order by data_ora_registrazione asc";
@@ -1427,6 +1427,10 @@ namespace ComandeRestAPI.Controllers
                 double diffCo = incassoCo - speseCo;
                 double diffPo = incassoPo - spesePo;
                 double totaleDiff = diffCo + diffPo;
+
+                // Effettivo in cassa = contante fisico nel cassetto
+                // = Differenza contanti al netto dell'acconto contanti (il POS non entra in cassa)
+                double nettoCassaCo = diffCo - accontoCo;
 
                 // -------------------------
                 // Creazione PDF
@@ -1484,6 +1488,12 @@ namespace ComandeRestAPI.Controllers
                 table.AddCell(new Cell().Add(new Paragraph(diffCo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
                 table.AddCell(new Cell().Add(new Paragraph(diffPo.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
                 table.AddCell(new Cell().Add(new Paragraph(totaleDiff.ToString("C", it))).SetTextAlignment(TextAlignment.RIGHT));
+
+                // Effettivo in Cassa (solo contanti: contante fisico al netto dell'acconto contanti)
+                table.AddCell(new Cell().Add(new Paragraph("Effettivo in Cassa").SetFont(fontBold)));
+                table.AddCell(new Cell().Add(new Paragraph(nettoCassaCo.ToString("C", it)).SetFont(fontBold)).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph("-")).SetTextAlignment(TextAlignment.RIGHT));
+                table.AddCell(new Cell().Add(new Paragraph("-")).SetTextAlignment(TextAlignment.RIGHT));
 
                 document.Add(table);
                 Operatori o = new Operatori(id_utente);
