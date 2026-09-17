@@ -80,9 +80,16 @@ namespace ComandeRestAPI.Controllers
         }
 
         [HttpGet("getSpeseFiltro")]
-        public ActionResult<IEnumerable<Pagamenti>> GetSpeseFiltro([FromQuery] string filtro)
+        public ActionResult<IEnumerable<Pagamenti>> GetSpeseFiltro([FromQuery] string filtro, [FromQuery] int id_operatore = 0)
         {
             var list = Pagamenti.getSpeseFiltro(filtro);
+            // vincolo socio_XXXX_data: se passato l'operatore, nascondo i pagamenti antecedenti alla sua data di inizio contabile
+            if (id_operatore > 0)
+            {
+                var permessi = PermessiOperatore.get(id_operatore);
+                if (permessi.Data_inizio_contabile != null)
+                    list = list.Where(p => permessi.dataConsentita(p.Data_ora_registrazione)).ToList();
+            }
             return Ok(list);
         }
 
@@ -229,9 +236,11 @@ namespace ComandeRestAPI.Controllers
             return Ok(list);
         }
         [HttpGet("getIncassoDettaglio")]
-        public ActionResult<IEnumerable<IncassoGiorno>> GetIncassoDettaglio(string data)
+        public ActionResult<IEnumerable<IncassoGiorno>> GetIncassoDettaglio(string data, int id_operatore = 0)
         {
             var incasso = new List<IncassoGiorno>();
+            // vincolo socio_XXXX_data: data antecedente al limite dell'operatore -> nessun dato
+            if (!PermessiOperatore.dataConsentita(id_operatore, data)) return Ok(incasso);
             try
             {
                 if (_conn.State != System.Data.ConnectionState.Open) _conn.Open();
@@ -352,18 +361,20 @@ namespace ComandeRestAPI.Controllers
         }
 
         [HttpGet("getTotaleIncassoData")]  // usata app Gestore - inserita il 28/07/2025
-        public ActionResult<List<SintesiIncasso>> getTotaleIncassoData(string data) 
+        public ActionResult<List<SintesiIncasso>> getTotaleIncassoData(string data, int id_operatore = 0)
         {
             List<SintesiIncasso> list = new List<SintesiIncasso>();
+            if (!PermessiOperatore.dataConsentita(id_operatore, data)) return list; // vincolo socio_XXXX_data
             list.Add(SintesiIncasso.getSintesiIncasobyDataOra(data,"12:00"));
             list.Add(SintesiIncasso.getSintesiIncasobyDataOra(data, "19:00"));
             return list;
         }
 
         [HttpGet("getTotaleTipoIncassoData")]  // usata app Gestore - inserita il 28/07/2025
-        public ActionResult<List<SintesiTipoIncasso>> getTotaleTipoIncassoData(string data)
+        public ActionResult<List<SintesiTipoIncasso>> getTotaleTipoIncassoData(string data, int id_operatore = 0)
         {
             List<SintesiTipoIncasso> list = new List<SintesiTipoIncasso>();
+            if (!PermessiOperatore.dataConsentita(id_operatore, data)) return list; // vincolo socio_XXXX_data
             list.Add(SintesiTipoIncasso.getSintetesiTipoIncassobyDataOra(data, "12:00"));
             list.Add(SintesiTipoIncasso.getSintetesiTipoIncassobyDataOra(data, "19:00"));
 
@@ -505,9 +516,31 @@ namespace ComandeRestAPI.Controllers
             db.Dispose();
             return Ok();
         }
-         [HttpDelete("deleteTavolata/{id_tavolata}")] // usata app Gestore
-        public ActionResult<bool> deletetavolata(int id_tavolata)
+        [HttpDelete("deleteTavolata/{id_tavolata}")] // usata app Gestore
+        // id_operatore (query string, opzionale): necessario per cancellare tavolate già contabilizzate
+        // (stato CHIUSO=3 / STAMPATO=4), consentito solo agli operatori con socio_XXXX_cancella_chiusi='1'.
+        public ActionResult<bool> deletetavolata(int id_tavolata, [FromQuery] int id_operatore = 0)
         {
+            Tavolata tav;
+            try
+            {
+                tav = new Tavolata(id_tavolata);
+            }
+            catch
+            {
+                return NotFound($"Tavolata {id_tavolata} non trovata.");
+            }
+
+            bool contabilizzata = tav.Id_stato == 3 || tav.Id_stato == 4;
+            if (contabilizzata)
+            {
+                var permessi = PermessiOperatore.get(id_operatore);
+                if (!permessi.Cancella_tavoli_chiusi)
+                {
+                    return StatusCode(403, "Operatore non abilitato alla cancellazione di tavolate già chiuse/contabilizzate.");
+                }
+            }
+
             try
             {
                 Tavolata.deleteTavolata(id_tavolata);
@@ -518,13 +551,22 @@ namespace ComandeRestAPI.Controllers
                 SqlDataReader r = db.getReader(sql);
                 int id_p = r.RecordsAffected;
                 db.Dispose();
+
+                try
+                {
+                    commons.setLogMessage(id_operatore.ToString(),
+                        $"App Gestore: cancellata tavolata {id_tavolata} '{tav.Descrizione}' del {tav.DataOraArrivo:dd/MM/yyyy HH:mm} " +
+                        $"(stato {tav.Stato?.Descrizione}, acconto {tav.Acconto}, sconto {tav.Sconto}) e {id_p} pagamenti collegati");
+                }
+                catch { }
+
                 return Ok(true);
             }
-            catch 
+            catch
             {
                 return Ok(false);
             }
-            
+
         }
         [HttpPost("creaPrenotazione")] // usata app Gestore
         public async Task<IActionResult> creaPrenotazione([FromBody] TavolataMini2 t)
@@ -1195,6 +1237,15 @@ namespace ComandeRestAPI.Controllers
             return op;
         }
 
+        [HttpGet("getPermessiOperatore")] // usata app Gestore
+        // Ritorna i vincoli "socio" dell'operatore letti da parametri_wa:
+        //  socio_XXXX_data            -> data_inizio_contabile (null = nessun limite)
+        //  socio_XXXX_cancella_chiusi -> cancella_tavoli_chiusi (true/false)
+        public ActionResult<PermessiOperatore> getPermessiOperatore(int id_operatore)
+        {
+            return Ok(PermessiOperatore.get(id_operatore));
+        }
+
         [HttpPost("hasExtra")]
         public ActionResult<bool[]> HasExtra([FromBody] int[] ids)
         {
@@ -1287,10 +1338,17 @@ namespace ComandeRestAPI.Controllers
         /*USATA IN App Gestori         */
 
         [HttpGet("getSpeseALL")] // usata app Gestore
-        public ActionResult<IEnumerable<Spesa>> getSpeseALL()
+        public ActionResult<IEnumerable<Spesa>> getSpeseALL(int id_operatore = 0)
         {
             List<Spesa> list = new List<Spesa>();
             list = Spesa.getAll();
+            // vincolo socio_XXXX_data: se passato l'operatore, nascondo le spese antecedenti alla sua data di inizio contabile
+            if (id_operatore > 0)
+            {
+                var permessi = PermessiOperatore.get(id_operatore);
+                if (permessi.Data_inizio_contabile != null)
+                    list = list.Where(s => permessi.dataConsentita(s.Data_registrazione)).ToList();
+            }
             return Ok(list);
         }
         [HttpPost("updateSpesa")]
@@ -1393,6 +1451,24 @@ namespace ComandeRestAPI.Controllers
         [HttpGet("createPDF")]// usata app Gestore
         public IActionResult createPDF(string data1,string data2, string pasto1, string pasto2, int id_utente)
         {
+            // vincolo socio_XXXX_data: il periodo non può iniziare prima della data di inizio contabile dell'operatore
+            var permessi = PermessiOperatore.get(id_utente);
+            if (permessi.Data_inizio_contabile != null)
+            {
+                CultureInfo itCulture = new CultureInfo("it-IT");
+                DateTime minData = permessi.Data_inizio_contabile.Value;
+                if (DateTime.TryParse(data2, itCulture, DateTimeStyles.None, out DateTime d2) && d2.Date < minData)
+                {
+                    return StatusCode(403, $"Dati contabili visibili solo a partire dal {minData:dd/MM/yyyy}.");
+                }
+                if (DateTime.TryParse(data1, itCulture, DateTimeStyles.None, out DateTime d1) && d1.Date < minData)
+                {
+                    // riporto l'inizio periodo alla prima data consentita (dal pranzo)
+                    data1 = minData.ToString("dd/MM/yyyy");
+                    pasto1 = "12:00";
+                }
+            }
+
             try
             {
                 // -------------------------
