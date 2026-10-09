@@ -184,6 +184,80 @@ namespace ComandeRestAPI.Classi
             return ms.ToArray();
         }
 
+        /// <summary>
+        /// Stampa il PDF direttamente dal server su una stampante Windows.
+        /// Le pagine vengono renderizzate in immagini (PDFtoImage / PDFium, in-process) e mandate allo
+        /// spooler con System.Drawing.Printing: nessun eseguibile esterno, nessuna finestra, quindi
+        /// funziona anche sotto IIS (sessione di servizio senza desktop), come già fa l'ASMX.
+        /// Stampante usata, in ordine: parametro esplicito, chiave parametri_wa 'stampante_foglio_note',
+        /// stampante predefinita dell'utenza con cui gira l'API (app pool IIS).
+        /// Ritorna il nome della stampante usata.
+        /// </summary>
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+        public static string stampa(byte[] pdf, string? stampante = null)
+        {
+            if (string.IsNullOrWhiteSpace(stampante))
+            {
+                try { stampante = commons.recuperoParametri("stampante_foglio_note").Trim(); } catch { stampante = ""; }
+            }
+            if (string.IsNullOrWhiteSpace(stampante))
+            {
+                stampante = new System.Drawing.Printing.PrinterSettings().PrinterName; // predefinita
+            }
+            if (string.IsNullOrWhiteSpace(stampante))
+            {
+                throw new Exception("Nessuna stampante predefinita per l'utenza dell'API e chiave 'stampante_foglio_note' assente in parametri_wa.");
+            }
+
+            var impostazioni = new System.Drawing.Printing.PrinterSettings { PrinterName = stampante };
+            if (!impostazioni.IsValid)
+            {
+                throw new Exception($"Stampante '{stampante}' non trovata o non accessibile per l'utenza con cui gira l'API.");
+            }
+
+            // 1) PDF -> una immagine per pagina (150 dpi bastano per testo e icone del Foglio Note)
+            var pagine = new List<System.Drawing.Image>();
+            foreach (SkiaSharp.SKBitmap bmp in PDFtoImage.Conversion.ToImages(pdf, options: new PDFtoImage.RenderOptions(Dpi: 150)))
+            {
+                using (bmp)
+                using (SkiaSharp.SKImage img = SkiaSharp.SKImage.FromBitmap(bmp))
+                using (SkiaSharp.SKData data = img.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100))
+                {
+                    pagine.Add(System.Drawing.Image.FromStream(new MemoryStream(data.ToArray())));
+                }
+            }
+            if (pagine.Count == 0) throw new Exception("Il PDF del Foglio Note non contiene pagine.");
+
+            // 2) stampa GDI: una pagina A4 orizzontale per immagine, adattata ai margini
+            try
+            {
+                int indice = 0;
+                using var doc = new System.Drawing.Printing.PrintDocument();
+                doc.PrinterSettings = impostazioni;
+                doc.DocumentName = "Foglio Note Carbolandia";
+                doc.PrintController = new System.Drawing.Printing.StandardPrintController(); // niente finestra di stato
+                doc.DefaultPageSettings.Landscape = true;
+                doc.DefaultPageSettings.Margins = new System.Drawing.Printing.Margins(25, 25, 25, 25); // centesimi di pollice
+                doc.PrintPage += (s, e) =>
+                {
+                    System.Drawing.Image img = pagine[indice];
+                    System.Drawing.RectangleF area = e.MarginBounds;
+                    float rapporto = img.Width / (float)img.Height;
+                    float w = area.Width, h = w / rapporto;
+                    if (h > area.Height) { h = area.Height; w = h * rapporto; }
+                    e.Graphics!.DrawImage(img, area.X + (area.Width - w) / 2, area.Y + (area.Height - h) / 2, w, h);
+                    indice++;
+                    e.HasMorePages = indice < pagine.Count;
+                };
+                doc.Print();
+            }
+            finally
+            {
+                foreach (var p in pagine) p.Dispose();
+            }
+            return stampante;
+        }
+
         // ============================ helpers ============================
 
         private static string cartellaIcone => System.IO.Path.Combine(AppContext.BaseDirectory, "Risorse", "foglionote");

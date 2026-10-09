@@ -1473,6 +1473,35 @@ namespace ComandeRestAPI.Controllers
             }
         }
 
+        [HttpPost("stampaFoglioNote")] // usata app Gestore
+        // Genera il Foglio Note e lo manda in stampa DAL SERVER (stampante in parametri_wa 'stampante_foglio_note',
+        // altrimenti la predefinita dell'utenza dell'API). Stessi parametri di getFoglioNotePdf più id_operatore per il log.
+        public IActionResult stampaFoglioNote(string data, string pasto = "19:00", int ordinamento = 1, int id_operatore = 0)
+        {
+            if (!DateTime.TryParse(data, new CultureInfo("it-IT"), DateTimeStyles.None, out DateTime giorno))
+                return BadRequest("Data non valida.");
+            if (pasto != "12:00" && pasto != "19:00")
+                return BadRequest("Pasto non valido: usare 12:00 o 19:00.");
+            try
+            {
+                string dataOrar = $"{giorno:dd/MM/yyyy} {pasto}";
+                var righe = FoglioNote.getRighe(dataOrar, ordinamento);
+                byte[] pdf = FoglioNote.generaPdf(righe, dataOrar, ordinamento);
+                string stampante = FoglioNote.stampa(pdf);
+                try
+                {
+                    commons.setLogMessage(id_operatore.ToString(),
+                        $"App Gestore: stampa Foglio Note del {dataOrar} ({righe.Count} tavolate) su '{stampante}'");
+                }
+                catch { }
+                return Ok(new { stampante, tavolate = righe.Count });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Errore nella stampa del Foglio Note: {ex.Message}");
+            }
+        }
+
         [HttpGet("createPDF")]// usata app Gestore
         public IActionResult createPDF(string data1,string data2, string pasto1, string pasto2, int id_utente)
         {
