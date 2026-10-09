@@ -1448,6 +1448,31 @@ namespace ComandeRestAPI.Controllers
             }
         }
       
+        [HttpGet("getFoglioNotePdf")] // usata app Gestore
+        // Foglio Note del servizio in PDF (stesso documento prodotto dal Gestionale, pulsante "Foglio Note").
+        //  data        : giorno del servizio (dd/MM/yyyy oppure yyyy-MM-dd)
+        //  pasto       : "12:00" pranzo | "19:00" cena
+        //  ordinamento : 1 = per nominativo, 2 = per data di prenotazione
+        public IActionResult getFoglioNotePdf(string data, string pasto = "19:00", int ordinamento = 1)
+        {
+            if (!DateTime.TryParse(data, new CultureInfo("it-IT"), DateTimeStyles.None, out DateTime giorno))
+                return BadRequest("Data non valida.");
+            if (pasto != "12:00" && pasto != "19:00")
+                return BadRequest("Pasto non valido: usare 12:00 o 19:00.");
+            try
+            {
+                string dataOrar = $"{giorno:dd/MM/yyyy} {pasto}";
+                var righe = FoglioNote.getRighe(dataOrar, ordinamento);
+                byte[] pdf = FoglioNote.generaPdf(righe, dataOrar, ordinamento);
+                string nomeFile = $"FoglioNote_{giorno:yyyyMMdd}_{(pasto == "12:00" ? "Pranzo" : "Cena")}.pdf";
+                return File(pdf, "application/pdf", nomeFile);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Errore nella generazione del Foglio Note: {ex.Message}");
+            }
+        }
+
         [HttpGet("createPDF")]// usata app Gestore
         public IActionResult createPDF(string data1,string data2, string pasto1, string pasto2, int id_utente)
         {

@@ -31,4 +31,11 @@
     <Service Include="{c0c07587-41a7-46c8-8fbd-3f9c8ebe2ddc}" />
   </ItemGroup>
 
+  <!-- icone del Foglio Note (Classi/FoglioNote.cs): copiate accanto all'eseguibile e nel publish -->
+  <ItemGroup>
+    <None Update="Risorse\**\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
